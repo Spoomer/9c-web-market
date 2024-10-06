@@ -1,5 +1,8 @@
+@using Microsoft.AspNetCore.Components.WebAssembly.Hosting
+@inject IWebAssemblyHostEnvironment HostEnvironment
+
 <div style="display: flex; align-items: center; justify-content: center;font-weight: 500;">
-    <img src="/icons/FungibleAssetValue/NCG.png" style="width: 16px;margin-right: 3px;" alt="Coin"/> <span>@Price</span>
+    <img src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png" style="width: 16px;margin-right: 3px;" alt="Coin"/> <span>@Price</span>
 </div>
 @if (UnitPrice != 0 && Math.Abs(UnitPrice - Price) > Tolerance)
 {

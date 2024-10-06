@@ -22,27 +22,27 @@
     align-items: center;
 }
 .item-bg-1 {
-    background: url('/icons/item_bg_1.png');
+    background: url('icons/item_bg_1.png');
     background-size: contain;
 }
 .item-bg-2 {
-    background: url('/icons/item_bg_2.png');
+    background: url('icons/item_bg_2.png');
     background-size: contain;
 }
 .item-bg-3 {
-    background: url('/icons/item_bg_3.png');
+    background: url('icons/item_bg_3.png');
     background-size: contain;
 }
 .item-bg-4 {
-    background: url('/icons/item_bg_4.png');
+    background: url('icons/item_bg_4.png');
     background-size: contain;
 }
 .item-bg-5 {
-    background: url('/icons/item_bg_5.png');
+    background: url('icons/item_bg_5.png');
     background-size: contain;
 }
 .item-bg-6 {
-    background: url('/icons/item_bg_6.png');
+    background: url('icons/item_bg_6.png');
     background-size: contain;
 }
 .item-level {

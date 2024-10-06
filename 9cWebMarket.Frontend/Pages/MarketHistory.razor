@@ -62,7 +62,7 @@
     [Parameter] public string? SelectedPlanet { get; set; }
 
     readonly PaginationState _pagination = new() { ItemsPerPage = 10 };
-    private readonly GridSort<MarketTransaction> _priceSort = GridSort<MarketTransaction>.ByDescending(x => x.TradeItem.Price);
+    private readonly GridSort<MarketTransaction> _priceSort = GridSort<MarketTransaction>.ByAscending(x => x.TradeItem.Price);
     private IReadOnlyCollection<string> _planets = [];
     private IQueryable<MarketTransaction> _items = Enumerable.Empty<MarketTransaction>().AsQueryable();
 

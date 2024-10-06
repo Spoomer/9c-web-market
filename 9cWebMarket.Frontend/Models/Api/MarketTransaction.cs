@@ -4,7 +4,7 @@ namespace NineCWebMarket.Frontend.Models.Api;
 
 public record MarketTransaction(
     [property: JsonPropertyName("blockTime")] DateTime BlockTime,
-    [property: JsonPropertyName("txId")] string TxId,
+    [property: JsonPropertyName("txId")] string? TxId,
     [property: JsonPropertyName("ticker")] string? Ticker,
     [property: JsonPropertyName("from")] string From,
     [property: JsonPropertyName("fromAvatar")] string FromAvatar,
@@ -12,7 +12,7 @@ public record MarketTransaction(
     [property: JsonPropertyName("blockIndex")] int BlockIndex,
     [property: JsonPropertyName("to")] string To,
     [property: JsonPropertyName("toAvatar")] string ToAvatar,
-    [property: JsonPropertyName("type")] string Type,
+    [property: JsonPropertyName("type")] string? Type,
     [property: JsonPropertyName("itemId_options")] string ItemIdOptions,
     [property: JsonPropertyName("itemSubType_grade_level")] string ItemSubTypeGradeLevel,
     [property: JsonPropertyName("itemSubType_grade")] string ItemSubTypeGrade,

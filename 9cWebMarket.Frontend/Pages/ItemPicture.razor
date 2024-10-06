@@ -37,7 +37,7 @@
                     {
                         <img src="@(HostEnvironment.BaseAddress)icons/UI_icon_option_stat.png"/>
                     }
-                    @if (int.Parse(ItemPictureProperties.ItemIdOptions.Split('_')[1].Split('+')[1]) >= 0)
+                    @if (int.Parse(ItemPictureProperties.ItemIdOptions.Split('_')[1].Split('+')[1]) > 0)
                     {
                         <img src="@(HostEnvironment.BaseAddress)icons/UI_icon_option_skill.png"/>
                     }

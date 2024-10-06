@@ -23,15 +23,19 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-          
+      
       # Install dotnet wasm buildtools workload
       - name: Install .NET WASM Build Tools
         run: dotnet workload install wasm-tools
-          
+
       # Publishes Blazor project to the release-folder
       - name: Publish .NET Core Project
         run: dotnet publish ./9cWebMarket.Frontend/9cWebMarket.Frontend.csproj -c:Release -p:GHPages=true -o dist/Web --nologo
 
+      # so underscore folders are not ignored
+      - name: Disable Jekyll
+        run: touch dist/Web/wwwroot/.nojekyll
+        
       - name: Commit wwwroot to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:

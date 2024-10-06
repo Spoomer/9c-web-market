@@ -5,7 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>NineCWebMarket.Frontend</RootNamespace>
-    <RunAOTCompilation>true</RunAOTCompilation>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <EmccMaximumHeapSize>268435456</EmccMaximumHeapSize>
   </PropertyGroup>
 
   <ItemGroup>

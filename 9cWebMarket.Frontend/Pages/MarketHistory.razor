@@ -1,0 +1,105 @@
+@page "/MarketHistory"
+@using NineCWebMarket.Frontend.Api
+@using NineCWebMarket.Frontend.Models.Api
+@using NineCWebMarket.Frontend.Models.Extensions
+@using NineCWebMarket.Frontend.Services.Interfaces
+@inject IApiClient ApiClient
+@inject IItemNameService ItemNameService
+
+<h3>MarketHistory @SelectedPlanet</h3>
+
+<QuickGrid Items="@_items" Pagination="@_pagination">
+    <TemplateColumn>
+        <ItemPicture ItemPictureProperties="@context.ToItemPictureProperties()"></ItemPicture>
+    </TemplateColumn>
+    <TemplateColumn Title="ItemId">
+        <a href="/itemdetails/@context.ItemId">@context.ItemId</a>
+    </TemplateColumn>
+    <TemplateColumn Title="Item Name">
+        @if (context.ItemId is not null)
+        {
+            <a href="/itemdetails/@context.ItemId">@GetItemName(context)</a>
+        }
+        else if (context.Ticker is not null)
+        {
+            <a href="/itemdetails/@context.Ticker">@GetItemName(context)</a>
+        }
+    </TemplateColumn>
+    <PropertyColumn Property="x => x.TradeItem.ItemId" Sortable="true"></PropertyColumn>
+    <PropertyColumn Property="x => x.TradeItem.CombatPoint" Sortable="true" Format="0,0.000"></PropertyColumn>
+    <PropertyColumn Property="x => x.TradeItem.Crystal" Sortable="true" Format="0,0.000"></PropertyColumn>
+    <PropertyColumn Property="x => x.TradeItem.CrystalPerPrice" Sortable="true" Format="0,0.000"></PropertyColumn>
+    <TemplateColumn Title="Price" SortBy="@_priceSort" InitialSortDirection="SortDirection.Ascending">
+        <PriceDisplayWithUnitPrice Price="context.TradeItem.Price" UnitPrice="context.TradeItem.UnitPrice"/>
+    </TemplateColumn>
+    <PropertyColumn Property="x => x.BlockTime" Sortable="true" IsDefaultSortColumn="true" InitialSortDirection="SortDirection.Descending"></PropertyColumn>
+    <TemplateColumn Sortable="true" Title="From">
+        @if (!string.IsNullOrEmpty(context.From))
+        {
+            @("0x" + context.From[..6])
+        }
+    </TemplateColumn>
+    <TemplateColumn Sortable="true" Title="To">
+        @if (!string.IsNullOrEmpty(context.To))
+        {
+            @("0x" + context.To[..6])
+        }
+    </TemplateColumn>
+</QuickGrid>
+<Paginator State="@_pagination"/>
+
+<div class="page-size-chooser">
+    Items per page:
+    <select @bind="@_pagination.ItemsPerPage">
+        <option>5</option>
+        <option>10</option>
+        <option>20</option>
+        <option>50</option>
+    </select>
+</div>
+
+@code {
+    [Parameter] public string? SelectedPlanet { get; set; }
+
+    readonly PaginationState _pagination = new() { ItemsPerPage = 10 };
+    private readonly GridSort<MarketTransaction> _priceSort = GridSort<MarketTransaction>.ByDescending(x => x.TradeItem.Price);
+    private IReadOnlyCollection<string> _planets = [];
+    private IQueryable<MarketTransaction> _items = Enumerable.Empty<MarketTransaction>().AsQueryable();
+
+    protected override void OnInitialized()
+    {
+        _ = InitAsync();
+    }
+
+    private string? GetItemName(MarketTransaction marketTransaction)
+    {
+        if (marketTransaction.ItemId is null)
+        {
+            return marketTransaction.Ticker;
+        }
+
+        return ItemNameService.GetValueOrDefault(marketTransaction.ItemId.Value);
+    }
+
+    private async Task InitAsync()
+    {
+        _planets = await ApiClient.GetPlanetsNamesAsync();
+        SelectedPlanet ??= _planets.FirstOrDefault();
+        await ItemNameService.InitAsync();
+        await SetItemsAsync();
+    }
+    private async Task SetItemsAsync()
+    {
+        if (SelectedPlanet is null)
+        {
+            _items = Enumerable.Empty<MarketTransaction>().AsQueryable();
+        }
+        else
+        {
+            _items = (await ApiClient.GetMarketHistoryAsync(SelectedPlanet))?.Transactions.AsQueryable() ?? Enumerable.Empty<MarketTransaction>().AsQueryable();
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

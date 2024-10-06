@@ -1,5 +1,5 @@
 https://planets.nine-chronicles.com/planets/
 https://release.nine-chronicles.com/9c-launcher-config.json
-
+https://github.com/planetarium/NineChronicles/blob/main/nekoyume/Assets/StreamingAssets/Localization/item_name.csv
 
 

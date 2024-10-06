@@ -1,0 +1,50 @@
+@using NineCWebMarket.Frontend.Models
+@if(ItemPictureProperties is not null)
+{
+    <div class="my-2" style="display: flex;justify-content: center;">
+        <div class="item-bg item-bg-@((ItemPictureProperties.Grade < 1 ? 6 : ItemPictureProperties.Grade).ToString())">
+            @if (!string.IsNullOrEmpty(ItemPictureProperties.Ticker))
+            {
+                <img src="/icons/FungibleAssetValue/@(ItemPictureProperties.Ticker).png" alt="@(ItemPictureProperties.Ticker)"/>
+            }
+            @if (ItemPictureProperties.ItemId is not null)
+            {
+                <img src="/icons/Item/@(ItemPictureProperties.ItemId).png" alt="@(ItemPictureProperties.ItemId)"/>
+            }
+            @if (ItemPictureProperties.Level > 0)
+            {
+                <div class="item-level">
+                    +@(ItemPictureProperties.Level)
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(ItemPictureProperties.Ticker) || ItemPictureProperties.Quantity > 1)
+            {
+                <div class="item-quantity text-no-wrap">
+                    @(ItemPictureProperties.Quantity)
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(ItemPictureProperties.ItemIdOptions) && ItemPictureProperties.ItemType == 2)
+            {
+                <div class="item-option item-option-@(ItemPictureProperties.StatModels.Count + ItemPictureProperties.SkillModels.Count - 1)">
+                    <img src="/icons/UI_icon_option_stat.png"/>
+                    @if (int.Parse(ItemPictureProperties.ItemIdOptions.Split('_')[1].Split('+')[0]) >= 2)
+                    {
+                        <img src="/icons/UI_icon_option_stat.png"/>
+                    }
+                    @if (int.Parse(ItemPictureProperties.ItemIdOptions.Split('_')[1].Split('+')[0]) >= 3)
+                    {
+                        <img src="/icons/UI_icon_option_stat.png"/>
+                    }
+                    @if (int.Parse(ItemPictureProperties.ItemIdOptions.Split('_')[1].Split('+')[1]) >= 0)
+                    {
+                        <img src="/icons/UI_icon_option_skill.png"/>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public ItemPictureProperties? ItemPictureProperties { get; set; }
+}

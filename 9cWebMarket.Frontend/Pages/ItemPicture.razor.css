@@ -1,0 +1,130 @@
+.table-wrap {
+    background-color: white;
+}
+.row-item {
+    transition: all 0.5s;
+}
+.list-complete-enter, .list-complete-leave-to {
+    transform: translateY(-40px);
+    background-color: #f5f5fa;
+}
+.list-complete-leave-active {
+    transition: none;
+    position: absolute;
+    opacity: 0;
+}
+.item-bg {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.item-bg-1 {
+    background: url('/icons/item_bg_1.png');
+    background-size: contain;
+}
+.item-bg-2 {
+    background: url('/icons/item_bg_2.png');
+    background-size: contain;
+}
+.item-bg-3 {
+    background: url('/icons/item_bg_3.png');
+    background-size: contain;
+}
+.item-bg-4 {
+    background: url('/icons/item_bg_4.png');
+    background-size: contain;
+}
+.item-bg-5 {
+    background: url('/icons/item_bg_5.png');
+    background-size: contain;
+}
+.item-bg-6 {
+    background: url('/icons/item_bg_6.png');
+    background-size: contain;
+}
+.item-level {
+    position: absolute;
+    font-family: "Roboto", sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    color: #f6ec87;
+    font-style: italic;
+    right: 2px;
+    padding-right: 3px;
+    bottom: 0;
+    z-index: 10;
+    text-align: right;
+    width: 40px;
+    height: 28px;
+    text-shadow: 2px 2px 2px #000;
+}
+.item-quantity {
+    position: absolute;
+    font-family: "Roboto", sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: white;
+    text-shadow: 2px 2px 2px #333;
+    right: 2px;
+    padding-right: 3px;
+    bottom: 0;
+    z-index: 10;
+    text-align: right;
+    width: 100%;
+    height: 28px;
+}
+.item-option {
+    background: url('/icons/item_option_bg.png') no-repeat;
+    background-size: 15px 40px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    flex-flow: column;
+    height: 38px;
+    justify-content: center;
+    padding: 1px;
+    margin-left: 1px;
+
+    img {
+        width: 13px;
+    }
+
+    &.item-option-1 {}
+    &.item-option-2 {
+    }
+    &.item-option-3 {
+        padding-top: 5px;
+        img {
+            margin-top: -5px;
+        }
+    }
+    &.item-option-4 {
+        padding-top: 4px;
+        img {
+            margin-top: -7px;
+        }
+    }
+}
+.text-grade {
+    font-weight: 600;
+    text-shadow: 0px 0px 1px #000;
+}
+.text-grade-1 {
+}
+.text-grade-2 {
+    color: #75d216;
+}
+.text-grade-3 {
+    color: #083fd5;
+}
+.text-grade-4 {
+    color: #dac60a;
+    text-shadow: 0px 0px 1px #ffd35c;
+}
+.text-grade-5 {
+    color: #8b00b9;
+}

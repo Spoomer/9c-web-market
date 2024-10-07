@@ -5,8 +5,18 @@
 @using NineCWebMarket.Frontend.Services.Interfaces
 @inject IApiClient ApiClient
 @inject IItemNameService ItemNameService
+@inject NavigationManager NavigationManager
 
-<h3>MarketHistory @SelectedPlanet</h3>
+<h3>MarketHistory</h3>
+<div class="input-group mb-3 w-25">
+    <label class="input-group-text" for="planet-select">Planet</label>
+    <select class="form-select" id="planet-select" @onchange="OnPlanetSelectChange">
+        @foreach (var planet in _planets)
+        {
+            <option value="@planet" selected="@(planet == SelectedPlanet)">@planet</option>
+        }
+    </select>
+</div>
 
 <QuickGrid Items="@_items" Pagination="@_pagination">
     <TemplateColumn>
@@ -66,9 +76,50 @@
     private IReadOnlyCollection<string> _planets = [];
     private IQueryable<MarketTransaction> _items = Enumerable.Empty<MarketTransaction>().AsQueryable();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _ = InitAsync();
+        _planets = await ApiClient.GetPlanetsNamesAsync();
+        if (!SetSelectedPlanetFromUrl())
+        {
+            SelectedPlanet ??= _planets.FirstOrDefault();
+        }
+
+        await ItemNameService.InitAsync();
+        await SetItemsAsync();
+    }
+
+    private async Task OnPlanetSelectChange(ChangeEventArgs e)
+    {
+        if (e.Value is string planet)
+        {
+            await ChangePlanetAsync(planet);
+        }
+    }
+
+    private async Task ChangePlanetAsync(string planet)
+    {
+        NavigationManager.NavigateTo($"#{planet}");
+        SetPlanet(planet);
+        await SetItemsAsync();
+    }
+
+    private bool SetSelectedPlanetFromUrl()
+    {
+        var uri = new Uri(NavigationManager.Uri, UriKind.Absolute);
+
+        if (!uri.Fragment.StartsWith('#')) return false;
+
+        var planetFromFragment = uri.Fragment[1..];
+
+        return SetPlanet(planetFromFragment);
+    }
+
+    private bool SetPlanet(string planet)
+    {
+        if (!_planets.Contains(planet)) return false;
+
+        SelectedPlanet = planet;
+        return true;
     }
 
     private string? GetItemName(MarketTransaction marketTransaction)
@@ -81,13 +132,6 @@
         return ItemNameService.GetValueOrDefault(marketTransaction.ItemId.Value);
     }
 
-    private async Task InitAsync()
-    {
-        _planets = await ApiClient.GetPlanetsNamesAsync();
-        SelectedPlanet ??= _planets.FirstOrDefault();
-        await ItemNameService.InitAsync();
-        await SetItemsAsync();
-    }
     private async Task SetItemsAsync()
     {
         if (SelectedPlanet is null)
@@ -101,5 +145,6 @@
 
         await InvokeAsync(StateHasChanged);
     }
+
 
 }

@@ -8,7 +8,7 @@
 @inject NavigationManager NavigationManager
 
 <h3>MarketHistory</h3>
-<div class="input-group mb-3 w-25">
+<div class="input-group mb-3 w-50">
     <label class="input-group-text" for="planet-select">Planet</label>
     <select class="form-select" id="planet-select" @onchange="OnPlanetSelectChange">
         @foreach (var planet in _planets)
@@ -18,63 +18,59 @@
     </select>
 </div>
 
-<QuickGrid Items="@_items" Pagination="@_pagination">
-    <TemplateColumn>
-        <ItemPicture ItemPictureProperties="@context.ToItemPictureProperties()"></ItemPicture>
-    </TemplateColumn>
-    <TemplateColumn Title="ItemId">
-        <a href="/itemdetails/@context.ItemId">@context.ItemId</a>
-    </TemplateColumn>
-    <TemplateColumn Title="Item Name">
-        @if (context.ItemId is not null)
-        {
-            <a href="/itemdetails/@context.ItemId">@GetItemName(context)</a>
-        }
-        else if (context.Ticker is not null)
-        {
-            <a href="/itemdetails/@context.Ticker">@GetItemName(context)</a>
-        }
-    </TemplateColumn>
-    <PropertyColumn Property="x => x.TradeItem.ItemId" Sortable="true"></PropertyColumn>
-    <PropertyColumn Property="x => x.TradeItem.CombatPoint" Sortable="true" Format="0,0.000"></PropertyColumn>
-    <PropertyColumn Property="x => x.TradeItem.Crystal" Sortable="true" Format="0,0.000"></PropertyColumn>
-    <PropertyColumn Property="x => x.TradeItem.CrystalPerPrice" Sortable="true" Format="0,0.000"></PropertyColumn>
-    <TemplateColumn Title="Price" SortBy="@_priceSort" InitialSortDirection="SortDirection.Ascending">
-        <PriceDisplayWithUnitPrice Price="context.TradeItem.Price" UnitPrice="context.TradeItem.UnitPrice"/>
-    </TemplateColumn>
-    <PropertyColumn Property="x => x.BlockTime" Sortable="true" IsDefaultSortColumn="true" InitialSortDirection="SortDirection.Descending"></PropertyColumn>
-    <TemplateColumn Sortable="true" Title="From">
-        @if (!string.IsNullOrEmpty(context.From))
-        {
-            @("0x" + context.From[..6])
-        }
-    </TemplateColumn>
-    <TemplateColumn Sortable="true" Title="To">
-        @if (!string.IsNullOrEmpty(context.To))
-        {
-            @("0x" + context.To[..6])
-        }
-    </TemplateColumn>
-</QuickGrid>
-<Paginator State="@_pagination"/>
-
-<div class="page-size-chooser">
-    Items per page:
-    <select @bind="@_pagination.ItemsPerPage">
-        <option>5</option>
-        <option>10</option>
-        <option>20</option>
-        <option>50</option>
-    </select>
+<div class="grid" tabindex="-1">
+    <QuickGrid Virtualize="true" ItemsProvider="_itemsProvider" ItemSize="79.19f" @ref="_grid">
+        <TemplateColumn>
+            <ItemPicture ItemPictureProperties="@context.ToItemPictureProperties()"></ItemPicture>
+        </TemplateColumn>
+        <TemplateColumn Title="ItemId">
+            <a href="/itemdetails/@context.ItemId">@context.ItemId</a>
+        </TemplateColumn>
+        <TemplateColumn Title="Item Name">
+            @if (context.ItemId is not null)
+            {
+                <a href="/itemdetails/@context.ItemId">@GetItemName(context)</a>
+            }
+            else if (context.Ticker is not null)
+            {
+                <a href="/itemdetails/@context.Ticker">@GetItemName(context)</a>
+            }
+        </TemplateColumn>
+        <PropertyColumn Property="x => x.TradeItem.ItemId" Sortable="true"></PropertyColumn>
+        <PropertyColumn Property="x => x.TradeItem.CombatPoint" Sortable="true" Format="0,0.000"></PropertyColumn>
+        <PropertyColumn Property="x => x.TradeItem.Crystal" Sortable="true" Format="0,0.000"></PropertyColumn>
+        <PropertyColumn Property="x => x.TradeItem.CrystalPerPrice" Sortable="true" Format="0,0.000"></PropertyColumn>
+        <TemplateColumn Title="Price" SortBy="@_priceSort" InitialSortDirection="SortDirection.Ascending">
+            <PriceDisplayWithUnitPrice Price="context.TradeItem.Price" UnitPrice="context.TradeItem.UnitPrice"/>
+        </TemplateColumn>
+        <PropertyColumn Property="x => x.BlockTime" Sortable="true" IsDefaultSortColumn="true" InitialSortDirection="SortDirection.Descending"></PropertyColumn>
+        <TemplateColumn Sortable="true" Title="From">
+            @if (!string.IsNullOrEmpty(context.From))
+            {
+                @("0x" + context.From[..6])
+            }
+        </TemplateColumn>
+        <TemplateColumn Sortable="true" Title="To">
+            @if (!string.IsNullOrEmpty(context.To))
+            {
+                @("0x" + context.To[..6])
+            }
+        </TemplateColumn>
+    </QuickGrid>
 </div>
-
 @code {
+
+    private static readonly GridItemsProviderResult<MarketTransaction> EmptyResult = new() { Items = [], TotalItemCount = MaxRowCount };
+
     [Parameter] public string? SelectedPlanet { get; set; }
 
-    readonly PaginationState _pagination = new() { ItemsPerPage = 10 };
+    QuickGrid<MarketTransaction>? _grid;
     private readonly GridSort<MarketTransaction> _priceSort = GridSort<MarketTransaction>.ByAscending(x => x.TradeItem.Price);
     private IReadOnlyCollection<string> _planets = [];
-    private IQueryable<MarketTransaction> _items = Enumerable.Empty<MarketTransaction>().AsQueryable();
+    private Dictionary<string, List<MarketTransaction>> _itemsPerPlanet = [];
+    private GridItemsProvider<MarketTransaction>? _itemsProvider;
+    private const int MaxRowCount = 1000;
+    private Dictionary<string, string?> _lastIndex = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -85,7 +81,47 @@
         }
 
         await ItemNameService.InitAsync();
-        await SetItemsAsync();
+        _itemsProvider = ItemsProvider;
+    }
+
+    private async ValueTask<GridItemsProviderResult<MarketTransaction>> ItemsProvider(GridItemsProviderRequest<MarketTransaction> req)
+    {
+        if (SelectedPlanet is null || req.Count is null || req.Count == 0)
+        {
+            return EmptyResult;
+        }
+
+        if (!_itemsPerPlanet.TryGetValue(SelectedPlanet, out var items))
+        {
+            items = [];
+            _itemsPerPlanet[SelectedPlanet] = items;
+        }
+
+        int maxCount = req.StartIndex + req.Count.Value;
+        if (items.Count >= maxCount)
+        {
+            return new GridItemsProviderResult<MarketTransaction>() { Items = items.Slice(req.StartIndex, req.Count.Value), TotalItemCount = MaxRowCount};
+        }
+
+        _lastIndex.TryGetValue(SelectedPlanet, out var lastIndex);
+        while (maxCount > items.Count)
+        {
+            var result = await ApiClient.GetMarketHistoryAsync(SelectedPlanet, lastIndex);
+            if (result is null || result.Transactions.Count == 0)
+            {
+                if (req.StartIndex < items.Count)
+                {
+                    return new GridItemsProviderResult<MarketTransaction>() { Items = items[req.StartIndex..], TotalItemCount = MaxRowCount};
+                }
+
+                return EmptyResult;
+            }
+            items.AddRange(result.Transactions);
+            lastIndex = result.Before;
+            _lastIndex[SelectedPlanet] = lastIndex;
+        }
+        
+        return new GridItemsProviderResult<MarketTransaction> { Items = items.Slice(req.StartIndex, req.Count.Value), TotalItemCount = MaxRowCount};
     }
 
     private async Task OnPlanetSelectChange(ChangeEventArgs e)
@@ -100,7 +136,10 @@
     {
         NavigationManager.NavigateTo($"#{planet}");
         SetPlanet(planet);
-        await SetItemsAsync();
+        if (_grid is not null)
+        {
+            await _grid.RefreshDataAsync();
+        }
     }
 
     private bool SetSelectedPlanetFromUrl()
@@ -131,20 +170,5 @@
 
         return ItemNameService.GetValueOrDefault(marketTransaction.ItemId.Value);
     }
-
-    private async Task SetItemsAsync()
-    {
-        if (SelectedPlanet is null)
-        {
-            _items = Enumerable.Empty<MarketTransaction>().AsQueryable();
-        }
-        else
-        {
-            _items = (await ApiClient.GetMarketHistoryAsync(SelectedPlanet))?.Transactions.AsQueryable() ?? Enumerable.Empty<MarketTransaction>().AsQueryable();
-        }
-
-        await InvokeAsync(StateHasChanged);
-    }
-
 
 }

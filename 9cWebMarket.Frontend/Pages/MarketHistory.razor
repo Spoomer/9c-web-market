@@ -60,10 +60,10 @@
                             }
                         </div>
                         <div id="crystals" class="me-3 d-flex">
-                            <span class="me-1">@(context.TradeItem.Crystal ?? 0) Crystals</span>
+                            <span class="me-1">@(context.TradeItem.Crystal ?? 0) <img alt="Crystal" src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png" style="width: 16px;"/></span>
                             @if (context.TradeItem is { Price: > 1, Crystal: > 0 })
                             {
-                                <div>(@context.TradeItem.CrystalPerPrice Crystal/<img alt="Gold" src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png" style="width: 16px;"/>)</div>
+                                <div>(@context.TradeItem.CrystalPerPrice <img alt="Crystal" src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png" style="width: 16px;"/>/<img alt="NCG" src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png" style="width: 16px;"/>)</div>
                             }
                         </div>
                         <div class="me-3" id="trader">

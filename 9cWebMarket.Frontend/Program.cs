@@ -15,6 +15,7 @@ builder.Services.Configure<NineChroniclesEndpoints>(builder.Configuration.GetSec
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IItemNameService, ItemNameService>();
 builder.Services.AddSingleton<IApiClient, ApiClient>();
+builder.Services.AddTransient<BrowserService>();
 
 var app = builder.Build();
 await app.RunAsync();

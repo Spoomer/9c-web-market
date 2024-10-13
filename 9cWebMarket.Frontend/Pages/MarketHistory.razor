@@ -1,127 +1,238 @@
 @page "/MarketHistory"
+@using Microsoft.AspNetCore.Components.WebAssembly.Hosting
 @using NineCWebMarket.Frontend.Api
 @using NineCWebMarket.Frontend.Models.Api
 @using NineCWebMarket.Frontend.Models.Extensions
+@using NineCWebMarket.Frontend.Services
 @using NineCWebMarket.Frontend.Services.Interfaces
 @inject IApiClient ApiClient
 @inject IItemNameService ItemNameService
 @inject NavigationManager NavigationManager
-
+@inject IWebAssemblyHostEnvironment HostEnvironment
+@inject BrowserService BrowserService
+@inject IJSRuntime JsRuntime
+@implements IAsyncDisposable
 <h3>MarketHistory</h3>
-<div class="input-group mb-3 w-50">
+<div class="input-group mb-3" style="min-width: 200px; height: 25%">
     <label class="input-group-text" for="planet-select">Planet</label>
     <select class="form-select" id="planet-select" @onchange="OnPlanetSelectChange">
         @foreach (var planet in _planets)
         {
-            <option value="@planet" selected="@(planet == SelectedPlanet)">@planet</option>
+            <option value="@planet" selected="@(planet == _selectedPlanet)">@planet</option>
         }
     </select>
 </div>
+<div>
+    @if (_firstItemLoadNotFinished)
+    {
+        <div class="d-flex mb-2" style="height: @(_elementHeight)px">
+            <svg height="58" width="58" class="placeholder-glow me-3">
+                <rect width="100%" height="100%" fill="grey"></rect>
+            </svg>
+            <div class="flex-column">
+                <div class="d-flex mb-2 placeholder-glow">
+                    <span class="placeholder me-3" style="width: 100px"></span>
+                    <span class="placeholder me-3" style="width: 50px"></span>
 
-<div class="grid" tabindex="-1">
-    <QuickGrid Virtualize="true" ItemsProvider="_itemsProvider" ItemSize="79.19f" @ref="_grid">
-        <TemplateColumn>
-            <ItemPicture ItemPictureProperties="@context.ToItemPictureProperties()"></ItemPicture>
-        </TemplateColumn>
-        <TemplateColumn Title="ItemId">
-            <a href="/itemdetails/@context.ItemId">@context.ItemId</a>
-        </TemplateColumn>
-        <TemplateColumn Title="Item Name">
-            @if (context.ItemId is not null)
-            {
-                <a href="/itemdetails/@context.ItemId">@GetItemName(context)</a>
-            }
-            else if (context.Ticker is not null)
-            {
-                <a href="/itemdetails/@context.Ticker">@GetItemName(context)</a>
-            }
-        </TemplateColumn>
-        <PropertyColumn Property="x => x.TradeItem.ItemId" Sortable="true"></PropertyColumn>
-        <PropertyColumn Property="x => x.TradeItem.CombatPoint" Sortable="true" Format="0,0.000"></PropertyColumn>
-        <PropertyColumn Property="x => x.TradeItem.Crystal" Sortable="true" Format="0,0.000"></PropertyColumn>
-        <PropertyColumn Property="x => x.TradeItem.CrystalPerPrice" Sortable="true" Format="0,0.000"></PropertyColumn>
-        <TemplateColumn Title="Price" SortBy="@_priceSort" InitialSortDirection="SortDirection.Ascending">
-            <PriceDisplayWithUnitPrice Price="context.TradeItem.Price" UnitPrice="context.TradeItem.UnitPrice"/>
-        </TemplateColumn>
-        <PropertyColumn Property="x => x.BlockTime" Sortable="true" IsDefaultSortColumn="true" InitialSortDirection="SortDirection.Descending"></PropertyColumn>
-        <TemplateColumn Sortable="true" Title="From">
-            @if (!string.IsNullOrEmpty(context.From))
-            {
-                @("0x" + context.From[..6])
-            }
-        </TemplateColumn>
-        <TemplateColumn Sortable="true" Title="To">
-            @if (!string.IsNullOrEmpty(context.To))
-            {
-                @("0x" + context.To[..6])
-            }
-        </TemplateColumn>
-    </QuickGrid>
+                </div>
+                <div class="d-flex placeholder-glow">
+                    <span class="placeholder me-3" style="width: 100px"></span>
+                    <span class="placeholder me-3" style="width: 100px"></span>
+                </div>
+            </div>
+        </div>
+    }
+    <Virtualize ItemsProvider="ItemsProvider" ItemSize="_elementHeight" @ref="_virtualizeComponent">
+        <ItemContent>
+            <div class="d-flex mb-2 border-bottom" style="height: @(_elementHeight)px">
+                <ItemPicture ItemPictureProperties="@context.ToItemPictureProperties()" Class="me-3"></ItemPicture>
+                <div class="d-flex flex-column">
+                    <div class="d-flex mb-2">
+                        <a href="/itemdetails/@(context.ItemId is null ? context.Ticker : context.ItemId)" class="me-3">@GetItemName(context)</a>
+                        <PriceDisplayWithUnitPrice Price="context.TradeItem.Price" UnitPrice="context.TradeItem.UnitPrice" Class="me-3"/>
+                    </div>
+                    <div class="d-flex flex-column flex-sm-column flex-md-row mb-2">
+                        <div id="combatPoints" class="me-3 d-flex">
+                            <span class="me-1">@(context.TradeItem.CombatPoint ?? 0) CP</span>
+                            @if (context.TradeItem is { Price: > 1, CombatPoint: > 0 })
+                            {
+                                <div>(~@(Math.Round(context.TradeItem.CombatPoint.Value / (decimal)context.TradeItem.Price)) CP/<img alt="Gold" src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png" style="width: 16px;"/>)</div>
+                            }
+                        </div>
+                        <div id="crystals" class="me-3 d-flex">
+                            <span class="me-1">@(context.TradeItem.Crystal ?? 0) Crystals</span>
+                            @if (context.TradeItem is { Price: > 1, Crystal: > 0 })
+                            {
+                                <div>(@context.TradeItem.CrystalPerPrice Crystal/<img alt="Gold" src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png" style="width: 16px;"/>)</div>
+                            }
+                        </div>
+                        <div class="me-3" id="trader">
+                            @if (!string.IsNullOrEmpty(context.From))
+                            {
+                                <span class="me-1"><b>Seller:</b> @("0x" + context.From[..6])</span>
+                            }
+                            @if (!string.IsNullOrEmpty(context.To))
+                            {
+                                <span><b>Buyer:</b> @("0x" + context.To[^6..])</span>
+                            }
+                        </div>
+                        <div id="blocktime">
+                            <img src="icons/Bootstrap/clock.svg" class="me-1" alt="time"/><span style="text-align: center">@context.BlockTime</span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </ItemContent>
+        <Placeholder>
+            <div class="d-flex mb-2" style="height: @(_elementHeight)px">
+                <svg height="58" width="58" class="placeholder-glow me-3">
+                    <rect width="100%" height="100%" fill="grey"></rect>
+                </svg>
+                <div class="flex-column">
+                    <div class="d-flex mb-2 placeholder-glow">
+                        <span class="placeholder me-3" style="width: 100px"></span>
+                        <span class="placeholder me-3" style="width: 50px"></span>
+
+                    </div>
+                    <div class="d-flex placeholder-glow">
+                        <span class="placeholder me-3" style="width: 100px"></span>
+                        <span class="placeholder me-3" style="width: 100px"></span>
+                    </div>
+                </div>
+            </div>
+        </Placeholder>
+    </Virtualize>
 </div>
+
 @code {
 
-    private static readonly GridItemsProviderResult<MarketTransaction> EmptyResult = new() { Items = [], TotalItemCount = MaxRowCount };
+    private static readonly ItemsProviderResult<MarketTransaction> EmptyResult = new([], 0);
 
-    [Parameter] public string? SelectedPlanet { get; set; }
-
-    QuickGrid<MarketTransaction>? _grid;
+    private string? _selectedPlanet;
+    private Virtualize<MarketTransaction>? _virtualizeComponent;
+    private readonly SemaphoreSlim _semaphoreSlim = new(1, 1);
     private readonly GridSort<MarketTransaction> _priceSort = GridSort<MarketTransaction>.ByAscending(x => x.TradeItem.Price);
     private IReadOnlyCollection<string> _planets = [];
     private Dictionary<string, List<MarketTransaction>> _itemsPerPlanet = [];
-    private GridItemsProvider<MarketTransaction>? _itemsProvider;
     private const int MaxRowCount = 1000;
     private Dictionary<string, string?> _lastIndex = new();
-
-    protected override async Task OnInitializedAsync()
+    private bool _firstItemLoadNotFinished = true;
+    private bool _isMobile = false;
+    private float _elementHeight = 64f;
+    
+    public override async Task SetParametersAsync(ParameterView parameters)
     {
+        parameters.SetParameterProperties(this);
+        _isMobile = await BrowserService.IsMobileWidthAsync();
+        if (_isMobile)
+        {
+            _elementHeight = 128f;
+        }
+        await InitAsync();
+        await base.SetParametersAsync(ParameterView.Empty);
+        
+    }
+    
+    [JSInvokable]
+    public void OnResize(int width, int height)
+    {
+        _elementHeight = width < 640 ? 128f : 64f;
+        StateHasChanged();
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JsRuntime.InvokeVoidAsync("window.helper.withContext.registerViewportChangeCallback", DotNetObjectReference.Create(this));
+        }
+    }
+
+
+    private async Task InitAsync()
+    {
+        if (_planets.Count != 0)
+        {
+            return;
+        }
+
         _planets = await ApiClient.GetPlanetsNamesAsync();
         if (!SetSelectedPlanetFromUrl())
         {
-            SelectedPlanet ??= _planets.FirstOrDefault();
+            Console.WriteLine($"Set {nameof(_selectedPlanet)}");
+            _selectedPlanet ??= _planets.FirstOrDefault();
         }
 
         await ItemNameService.InitAsync();
-        _itemsProvider = ItemsProvider;
     }
 
-    private async ValueTask<GridItemsProviderResult<MarketTransaction>> ItemsProvider(GridItemsProviderRequest<MarketTransaction> req)
+    private async ValueTask<ItemsProviderResult<MarketTransaction>> ItemsProvider(ItemsProviderRequest req)
     {
-        if (SelectedPlanet is null || req.Count is null || req.Count == 0)
+        if (_selectedPlanet is null || req.Count == 0)
         {
             return EmptyResult;
         }
 
-        if (!_itemsPerPlanet.TryGetValue(SelectedPlanet, out var items))
+        if (!_itemsPerPlanet.TryGetValue(_selectedPlanet, out var items))
         {
             items = [];
-            _itemsPerPlanet[SelectedPlanet] = items;
+            _itemsPerPlanet[_selectedPlanet] = items;
         }
 
-        int maxCount = req.StartIndex + req.Count.Value;
-        if (items.Count >= maxCount)
+        int maxCount = req.StartIndex + req.Count;
+        if (items.Count > maxCount)
         {
-            return new GridItemsProviderResult<MarketTransaction>() { Items = items.Slice(req.StartIndex, req.Count.Value), TotalItemCount = MaxRowCount};
+            return new ItemsProviderResult<MarketTransaction>(items.Slice(req.StartIndex, req.Count), items.Count);
         }
 
-        _lastIndex.TryGetValue(SelectedPlanet, out var lastIndex);
+        await _semaphoreSlim.WaitAsync();
+        try
+        {
+            if (items.Count > maxCount)
+            {
+                return new ItemsProviderResult<MarketTransaction>(items.Slice(req.StartIndex, req.Count), items.Count);
+            }
+
+            return await GetNewItems(req, maxCount + 1, items);
+        }
+        finally
+        {
+            _firstItemLoadNotFinished = false;
+            await InvokeAsync(StateHasChanged);
+            _semaphoreSlim.Release();
+        }
+    }
+
+    private async Task<ItemsProviderResult<MarketTransaction>> GetNewItems(ItemsProviderRequest req, int maxCount, List<MarketTransaction> items)
+    {
+        if (_selectedPlanet is null || req.Count == 0)
+        {
+            return EmptyResult;
+        }
+
+        _lastIndex.TryGetValue(_selectedPlanet, out var lastIndex);
         while (maxCount > items.Count)
         {
-            var result = await ApiClient.GetMarketHistoryAsync(SelectedPlanet, lastIndex);
+            var result = await ApiClient.GetMarketHistoryAsync(_selectedPlanet, lastIndex);
             if (result is null || result.Transactions.Count == 0)
             {
                 if (req.StartIndex < items.Count)
                 {
-                    return new GridItemsProviderResult<MarketTransaction>() { Items = items[req.StartIndex..], TotalItemCount = MaxRowCount};
+                    return new ItemsProviderResult<MarketTransaction>(items[req.StartIndex..], items.Count);
                 }
 
                 return EmptyResult;
             }
+
             items.AddRange(result.Transactions);
             lastIndex = result.Before;
-            _lastIndex[SelectedPlanet] = lastIndex;
+            _lastIndex[_selectedPlanet] = lastIndex;
         }
-        
-        return new GridItemsProviderResult<MarketTransaction> { Items = items.Slice(req.StartIndex, req.Count.Value), TotalItemCount = MaxRowCount};
+
+        return new ItemsProviderResult<MarketTransaction>(items.Slice(req.StartIndex, req.Count), items.Count);
     }
 
     private async Task OnPlanetSelectChange(ChangeEventArgs e)
@@ -136,9 +247,10 @@
     {
         NavigationManager.NavigateTo($"#{planet}");
         SetPlanet(planet);
-        if (_grid is not null)
+        if (_virtualizeComponent is not null)
         {
-            await _grid.RefreshDataAsync();
+            await _virtualizeComponent.RefreshDataAsync();
+            StateHasChanged();
         }
     }
 
@@ -157,7 +269,7 @@
     {
         if (!_planets.Contains(planet)) return false;
 
-        SelectedPlanet = planet;
+        _selectedPlanet = planet;
         return true;
     }
 
@@ -169,6 +281,13 @@
         }
 
         return ItemNameService.GetValueOrDefault(marketTransaction.ItemId.Value);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("window.helper.withContext.removeViewportChangeCallback", DotNetObjectReference.Create(this));
+        if (_virtualizeComponent != null) await _virtualizeComponent.DisposeAsync();
+        _semaphoreSlim.Dispose();
     }
 
 }

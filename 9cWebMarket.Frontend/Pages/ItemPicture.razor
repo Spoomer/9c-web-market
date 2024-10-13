@@ -1,9 +1,9 @@
 @using Microsoft.AspNetCore.Components.WebAssembly.Hosting
 @using NineCWebMarket.Frontend.Models
 @inject IWebAssemblyHostEnvironment HostEnvironment
-@if(ItemPictureProperties is not null)
-{
-    <div class="my-2" style="display: flex;justify-content: center;">
+<div class="@Class">
+    @if (ItemPictureProperties is not null)
+    {
         <div class="item-bg item-bg-@((ItemPictureProperties.Grade < 1 ? 6 : ItemPictureProperties.Grade).ToString())">
             @if (!string.IsNullOrEmpty(ItemPictureProperties.Ticker))
             {
@@ -44,9 +44,10 @@
                 </div>
             }
         </div>
-    </div>
-}
+    }
+</div>
 
 @code {
     [Parameter] public ItemPictureProperties? ItemPictureProperties { get; set; }
+    [Parameter] public string Class { get; set; } = string.Empty;
 }

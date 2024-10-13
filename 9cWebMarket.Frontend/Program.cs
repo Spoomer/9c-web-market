@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using NineCWebMarket.Frontend;
@@ -16,6 +17,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IItemNameService, ItemNameService>();
 builder.Services.AddSingleton<IApiClient, ApiClient>();
 builder.Services.AddTransient<BrowserService>();
+builder.Services.AddBlazoredLocalStorage();
 
 var app = builder.Build();
 await app.RunAsync();

@@ -1,13 +1,22 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject IJSRuntime Js
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">9cWebMarket.Frontend</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+        <a class="navbar-brand" href="">NineChronicles Market</a>
+        <div class="d-flex">
+            <div class="form-check form-switch align-content-center me-3">
+                <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" @onchange="ChangeDarkModeAsync" checked="@_prefersDarkMode">
+                <label class="form-check-label text-light" for="flexSwitchCheckDefault">Dark mode</label>
+            </div>
+            <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
     </div>
 </div>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+<div class="@NavMenuCssClass nav-scrollable h-auto" @onclick="ToggleNavMenu">
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
@@ -18,13 +27,38 @@
 </div>
 
 @code {
+    private const string PrefersDarkMode = "prefersDarkMode";
+    private bool _prefersDarkMode = false;
+
     private bool _collapseNavMenu = true;
 
     private string? NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
 
+    protected override async Task OnInitializedAsync()
+    {
+        var prefersDarkModeSaved = await LocalStorage.ContainKeyAsync(PrefersDarkMode);
+        if (prefersDarkModeSaved)
+        {
+            _prefersDarkMode = await LocalStorage.GetItemAsync<bool>(PrefersDarkMode);
+        }
+        else
+        {
+            _prefersDarkMode = await Js.InvokeAsync<bool>("window.helper." + PrefersDarkMode);
+        }
+
+        await Js.InvokeVoidAsync("window.helper.setTheme", _prefersDarkMode);
+    }
+
     private void ToggleNavMenu()
     {
         _collapseNavMenu = !_collapseNavMenu;
+    }
+
+    private async Task ChangeDarkModeAsync(ChangeEventArgs obj)
+    {
+        if (obj.Value is not bool darkMode) return;
+        await LocalStorage.SetItemAsync(PrefersDarkMode, darkMode);
+        await Js.InvokeVoidAsync("window.helper.setTheme", darkMode);
     }
 
 }

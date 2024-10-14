@@ -51,7 +51,7 @@
                         <a href="/itemdetails/@(context.ItemId is null ? context.Ticker : context.ItemId)" class="me-3">@GetItemName(context)</a>
                         <PriceDisplayWithUnitPrice Price="context.TradeItem.Price" UnitPrice="context.TradeItem.UnitPrice" Class="me-3"/>
                     </div>
-                    <div class="d-flex flex-column flex-sm-column flex-md-row mb-2">
+                    <div class="d-flex flex-column flex-sm-column flex-md-row mb-2 flex-wrap">
                         <div id="combatPoints" class="me-3 d-flex">
                             <span class="me-1">@(context.TradeItem.CombatPoint ?? 0) CP</span>
                             @if (context.TradeItem is { Price: > 1, CombatPoint: > 0 })
@@ -60,22 +60,28 @@
                             }
                         </div>
                         <div id="crystals" class="me-3 d-flex">
-                            <span class="me-1">@(context.TradeItem.Crystal ?? 0) <img alt="Crystal" src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png" style="width: 16px;"/></span>
+                            <span class="me-1">
+                                @(context.TradeItem.Crystal ?? 0) <img alt="Crystal" src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png" style="width: 16px;"/>
+                            </span>
                             @if (context.TradeItem is { Price: > 1, Crystal: > 0 })
                             {
                                 <div>(@context.TradeItem.CrystalPerPrice <img alt="Crystal" src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png" style="width: 16px;"/>/<img alt="NCG" src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png" style="width: 16px;"/>)</div>
                             }
                         </div>
-                        <div class="me-3" id="trader">
-                            @if (!string.IsNullOrEmpty(context.From))
-                            {
-                                <span class="me-1"><b>Seller:</b> @("0x" + context.From[..6])</span>
-                            }
-                            @if (!string.IsNullOrEmpty(context.To))
-                            {
-                                <span><b>Buyer:</b> @("0x" + context.To[^6..])</span>
-                            }
-                        </div>
+
+                        @if (!string.IsNullOrEmpty(context.From))
+                        {
+                            <div class="me-3" id="seller">
+                                <b>Seller:</b> @("0x" + context.From[..6])
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(context.To))
+                        {
+                            <div class="me-3" id="seller">
+                                <b>Buyer:</b> @("0x" + context.To[..6])
+                            </div>
+                        }
+
                         <div id="blocktime">
                             <Clock Class="me-1"/><span style="text-align: center">@context.BlockTime</span>
                         </div>
@@ -120,7 +126,10 @@
     private Dictionary<string, string?> _lastIndex = new();
     private bool _firstItemLoadNotFinished = true;
     private bool _isMobile = false;
-    private float _elementHeight = 64f;
+    private const float LargeDisplayElementHeight = 64f;
+    private const float MediumDisplayElementHeight = 128f;
+    private const float SmallDisplayElementHeight = 160f;
+    private float _elementHeight = LargeDisplayElementHeight;
     
     public override async Task SetParametersAsync(ParameterView parameters)
     {
@@ -128,7 +137,7 @@
         _isMobile = await BrowserService.IsMobileWidthAsync();
         if (_isMobile)
         {
-            _elementHeight = 128f;
+            _elementHeight = SmallDisplayElementHeight;
         }
         await InitAsync();
         await base.SetParametersAsync(ParameterView.Empty);
@@ -138,7 +147,19 @@
     [JSInvokable]
     public void OnResize(int width, int height)
     {
-        _elementHeight = width < 640 ? 128f : 64f;
+        switch (width)
+        {
+            case < 768:
+                _elementHeight = SmallDisplayElementHeight;
+                break;
+            case < 992:
+                _elementHeight = MediumDisplayElementHeight;
+                break;
+            default:
+                _elementHeight = LargeDisplayElementHeight;
+                break;
+        }
+
         StateHasChanged();
     }
 

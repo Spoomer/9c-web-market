@@ -183,7 +183,6 @@
         _planets = await ApiClient.GetPlanetsNamesAsync();
         if (!SetSelectedPlanetFromUrl())
         {
-            Console.WriteLine($"Set {nameof(_selectedPlanet)}");
             _selectedPlanet ??= _planets.FirstOrDefault();
         }
 
@@ -307,7 +306,6 @@
     public async ValueTask DisposeAsync()
     {
         await JsRuntime.InvokeVoidAsync("window.helper.withContext.removeViewportChangeCallback", DotNetObjectReference.Create(this));
-        if (_virtualizeComponent != null) await _virtualizeComponent.DisposeAsync();
         _semaphoreSlim.Dispose();
     }
 

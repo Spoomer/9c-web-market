@@ -10,6 +10,6 @@ public record SkillModel(
     [property: JsonPropertyName("elementalType")] int ElementalType,
     [property: JsonPropertyName("referencedStatType")] int ReferencedStatType,
     [property: JsonPropertyName("cooldown")] int Cooldown,
-    [property: JsonPropertyName("power")] int Power,
+    [property: JsonPropertyName("power")] long Power,
     [property: JsonPropertyName("skillCategory")] int SkillCategory
 );

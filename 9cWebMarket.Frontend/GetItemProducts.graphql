@@ -1,0 +1,152 @@
+query GetItemProducts( $skip : Int, $take : Int, $itemSubType: ItemSubType, $sortBy : ProductSortBy , $sortDirection: SortDirection ) {
+    products(skip: $skip, take: $take, filter: { itemSubType: $itemSubType, 
+        itemType: EQUIPMENT productType: NON_FUNGIBLE
+        sortBy: $sortBy sortDirection: $sortDirection
+    }) {
+        items {
+            avatarAddress
+            combatPoint
+            crystal
+            crystalPerPrice
+            productsStateAddress
+            unitPrice
+            object {
+                ... ItemProduct
+            }
+        }
+    }
+}
+
+fragment ItemProduct on ItemProduct {
+    itemCount
+    productId
+    productType
+    registeredBlockIndex
+    sellerAgentAddress
+    sellerAvatarAddress
+    tradableItem {
+        elementalType
+        grade
+        id
+        itemSubType
+        itemType
+        ... Weapon
+        ... Armor
+        ... Ring
+        ... Belt
+    }
+    price {
+        decimalPlaces
+        quantity
+        rawValue
+        ticker
+    }
+}
+
+fragment Armor on Armor{
+    elementalType
+    equipped
+    exp
+    grade
+    id
+    itemId
+    itemSubType
+    itemType
+    level
+    madeWithMimisbrunnrRecipe
+    optionCountFromCombination
+    requiredBlockIndex
+    setId
+    spineResourcePath
+    skills {
+        chance
+        power
+        referencedStatType
+        statPowerRatio
+        skillRow {
+            combo
+            cooldown
+            elementalType
+            hitCount
+            id
+            skillCategory
+            skillTargetType
+            skillType
+        }
+    }
+    statsMap{
+        value {
+            key
+            value {
+                additionalValue
+                baseValue
+                statType
+            }
+        }
+    }
+}
+
+fragment Belt on Belt {
+    elementalType
+    equipped
+    exp
+    grade
+    id
+    itemId
+    itemSubType
+    itemType
+    level
+    madeWithMimisbrunnrRecipe
+    optionCountFromCombination
+    requiredBlockIndex
+    setId
+    spineResourcePath
+}
+fragment Ring on Ring {
+    elementalType
+    equipped
+    exp
+    grade
+    id
+    itemId
+    itemSubType
+    itemType
+    level
+    madeWithMimisbrunnrRecipe
+    optionCountFromCombination
+    requiredBlockIndex
+    setId
+    spineResourcePath
+    skills {
+        chance
+        power
+        referencedStatType
+        statPowerRatio
+    }
+    statsMap {
+        value {
+            key
+            value {
+                additionalValue
+                baseValue
+                statType
+            }
+        }
+    }
+}
+fragment Weapon on Weapon {
+    elementalType
+    equipped
+    exp
+    grade
+    id
+    itemId
+    itemSubType
+    itemType
+    level
+    madeWithMimisbrunnrRecipe
+    optionCountFromCombination
+    requiredBlockIndex
+    setId
+    spineResourcePath
+}

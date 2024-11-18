@@ -72,13 +72,13 @@
                         @if (!string.IsNullOrEmpty(context.From))
                         {
                             <div class="me-3" id="seller">
-                                <b>Seller:</b> @("0x" + context.From[..6])
+                                <b>Seller:</b> @(context.From[..8])
                             </div>
                         }
                         @if (!string.IsNullOrEmpty(context.To))
                         {
                             <div class="me-3" id="seller">
-                                <b>Buyer:</b> @("0x" + context.To[..6])
+                                <b>Buyer:</b> @(context.To[..8])
                             </div>
                         }
 

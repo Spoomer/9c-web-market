@@ -108,7 +108,7 @@
                                         @if (!string.IsNullOrEmpty(context.SellerAgentAddress))
                                         {
                                             <div class="me-3" id="seller">
-                                                <b>Seller:</b> @("0x" + context.SellerAgentAddress[..6])
+                                                <b>Seller:</b> @(context.SellerAgentAddress[..8])
                                             </div>
                                         }
                                     </div>

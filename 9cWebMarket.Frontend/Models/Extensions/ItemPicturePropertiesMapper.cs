@@ -22,12 +22,30 @@ public static class ItemPicturePropertiesMapper
 
     public static ItemPictureProperties? ToItemPictureProperties(this IGetItemProducts_Products_Items_Object_TradableItem tradableItem)
     {
-        if (tradableItem is IArmor armor)
+        return tradableItem switch
         {
-            return armor.ToItemPictureProperties();
-        }
+            IWeapon weapon => weapon.ToItemPictureProperties(),
+            IArmor armor => armor.ToItemPictureProperties(),
+            IBelt belt => belt.ToItemPictureProperties(),
+            INecklace necklace => necklace.ToItemPictureProperties(),
+            IRing ring => ring.ToItemPictureProperties(),
+            _ => null
+        };
+    }
 
-        return null;
+    public static ItemPictureProperties ToItemPictureProperties(this IWeapon weapon)
+    {
+        return new ItemPictureProperties
+        {
+            ItemId = weapon.Id,
+            Grade = weapon.Grade,
+            Level = weapon.Level,
+            Quantity = 1,
+            ItemIdOptions = $"{weapon.Id}_{weapon.StatsMap.Value.Count}+{weapon.Skills.Count}",
+            ItemType = (int)weapon.ItemType,
+            SkillModels = weapon.Skills.ToSkillModels(),
+            StatModels = weapon.StatsMap.ToStatModels()
+        };
     }
 
     public static ItemPictureProperties ToItemPictureProperties(this IArmor armor)
@@ -45,27 +63,71 @@ public static class ItemPicturePropertiesMapper
         };
     }
 
-    private static IReadOnlyList<StatModel> ToStatModels(this IGetItemProducts_Products_Items_Object_TradableItem_StatsMap statsMap)
+    public static ItemPictureProperties ToItemPictureProperties(this IBelt belt)
+    {
+        return new ItemPictureProperties
+        {
+            ItemId = belt.Id,
+            Grade = belt.Grade,
+            Level = belt.Level,
+            Quantity = 1,
+            ItemIdOptions = $"{belt.Id}_{belt.StatsMap.Value.Count}+{belt.Skills.Count}",
+            ItemType = (int)belt.ItemType,
+            SkillModels = belt.Skills.ToSkillModels(),
+            StatModels = belt.StatsMap.ToStatModels()
+        };
+    }
+
+    public static ItemPictureProperties ToItemPictureProperties(this INecklace necklace)
+    {
+        return new ItemPictureProperties
+        {
+            ItemId = necklace.Id,
+            Grade = necklace.Grade,
+            Level = necklace.Level,
+            Quantity = 1,
+            ItemIdOptions = $"{necklace.Id}_{necklace.StatsMap.Value.Count}+{necklace.Skills.Count}",
+            ItemType = (int)necklace.ItemType,
+            SkillModels = necklace.Skills.ToSkillModels(),
+            StatModels = necklace.StatsMap.ToStatModels()
+        };
+    }
+
+    public static ItemPictureProperties ToItemPictureProperties(this IRing ring)
+    {
+        return new ItemPictureProperties
+        {
+            ItemId = ring.Id,
+            Grade = ring.Grade,
+            Level = ring.Level,
+            Quantity = 1,
+            ItemIdOptions = $"{ring.Id}_{ring.StatsMap.Value.Count}+{ring.Skills.Count}",
+            ItemType = (int)ring.ItemType,
+            SkillModels = ring.Skills.ToSkillModels(),
+            StatModels = ring.StatsMap.ToStatModels()
+        };
+    }
+
+    private static List<StatModel> ToStatModels(this IStats statsMap)
     {
         List<StatModel> stats = [];
         foreach (var stat in statsMap.Value)
         {
-            stats.Add(new StatModel((int)stat.Value.StatType, stat.Value.BaseValue, stat.Value.AdditionalValue));
+            stats.Add(new StatModel((int)stat.Value.StatType, stat.Value.AdditionalValue, true));
         }
 
         return stats;
     }
 
-    private static IReadOnlyList<SkillModel> ToSkillModels(this IReadOnlyList<IGetItemProducts_Products_Items_Object_TradableItem_Skills> skillsMap)
+    private static List<SkillModel> ToSkillModels(this IReadOnlyList<ISkills> skillsMap)
     {
         List<SkillModel> skills = [];
         foreach (var skill in skillsMap)
         {
-            skills.Add( new SkillModel(skill.SkillRow.Id, skill.StatPowerRatio, skill.SkillRow.HitCount, skill.Chance, (int)skill.SkillRow.ElementalType,
+            skills.Add(new SkillModel(skill.SkillRow.Id, skill.StatPowerRatio, skill.SkillRow.HitCount, skill.Chance, (int)skill.SkillRow.ElementalType,
                 (int)skill.ReferencedStatType, skill.SkillRow.Cooldown, skill.Power, (int)skill.SkillRow.SkillCategory));
         }
 
         return skills;
     }
-    
 }

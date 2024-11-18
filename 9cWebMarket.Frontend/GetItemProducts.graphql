@@ -32,106 +32,16 @@ fragment ItemProduct on ItemProduct {
         itemType
         ... Weapon
         ... Armor
-        ... Ring
         ... Belt
+        ... Necklace
+        ... Ring
+
     }
     price {
         decimalPlaces
         quantity
         rawValue
         ticker
-    }
-}
-
-fragment Armor on Armor{
-    elementalType
-    equipped
-    exp
-    grade
-    id
-    itemId
-    itemSubType
-    itemType
-    level
-    madeWithMimisbrunnrRecipe
-    optionCountFromCombination
-    requiredBlockIndex
-    setId
-    spineResourcePath
-    skills {
-        chance
-        power
-        referencedStatType
-        statPowerRatio
-        skillRow {
-            combo
-            cooldown
-            elementalType
-            hitCount
-            id
-            skillCategory
-            skillTargetType
-            skillType
-        }
-    }
-    statsMap{
-        value {
-            key
-            value {
-                additionalValue
-                baseValue
-                statType
-            }
-        }
-    }
-}
-
-fragment Belt on Belt {
-    elementalType
-    equipped
-    exp
-    grade
-    id
-    itemId
-    itemSubType
-    itemType
-    level
-    madeWithMimisbrunnrRecipe
-    optionCountFromCombination
-    requiredBlockIndex
-    setId
-    spineResourcePath
-}
-fragment Ring on Ring {
-    elementalType
-    equipped
-    exp
-    grade
-    id
-    itemId
-    itemSubType
-    itemType
-    level
-    madeWithMimisbrunnrRecipe
-    optionCountFromCombination
-    requiredBlockIndex
-    setId
-    spineResourcePath
-    skills {
-        chance
-        power
-        referencedStatType
-        statPowerRatio
-    }
-    statsMap {
-        value {
-            key
-            value {
-                additionalValue
-                baseValue
-                statType
-            }
-        }
     }
 }
 fragment Weapon on Weapon {
@@ -149,4 +59,126 @@ fragment Weapon on Weapon {
     requiredBlockIndex
     setId
     spineResourcePath
+    skills {
+        ... Skills
+    }
+    statsMap {
+        ... Stats
+    }
+}
+fragment Armor on Armor{
+    elementalType
+    equipped
+    exp
+    grade
+    id
+    itemId
+    itemSubType
+    itemType
+    level
+    madeWithMimisbrunnrRecipe
+    optionCountFromCombination
+    requiredBlockIndex
+    setId
+    spineResourcePath
+    skills {
+        ... Skills
+    }
+    statsMap {
+        ... Stats
+    }
+}
+fragment Belt on Belt {
+    elementalType
+    equipped
+    exp
+    grade
+    id
+    itemId
+    itemSubType
+    itemType
+    level
+    madeWithMimisbrunnrRecipe
+    optionCountFromCombination
+    requiredBlockIndex
+    setId
+    spineResourcePath
+    skills {
+        ... Skills
+    }
+    statsMap {
+        ... Stats
+    }
+}
+fragment Necklace on Necklace{
+    elementalType
+    equipped
+    exp
+    grade
+    id
+    itemId
+    itemSubType
+    itemType
+    level
+    madeWithMimisbrunnrRecipe
+    optionCountFromCombination
+    requiredBlockIndex
+    setId
+    spineResourcePath
+    skills {
+        ... Skills
+    }
+    statsMap {
+        ... Stats
+    }
+}
+fragment Ring on Ring {
+    elementalType
+    equipped
+    exp
+    grade
+    id
+    itemId
+    itemSubType
+    itemType
+    level
+    madeWithMimisbrunnrRecipe
+    optionCountFromCombination
+    requiredBlockIndex
+    setId
+    spineResourcePath
+    skills {
+        ... Skills
+    }
+    statsMap {
+        ... Stats
+    }
+}
+
+fragment Stats on StatMap{
+    value {
+        key
+        value {
+            additionalValue
+            baseValue
+            statType
+        }
+    }
+}
+
+fragment Skills on Skill {
+    chance
+    power
+    referencedStatType
+    statPowerRatio
+    skillRow {
+        combo
+        cooldown
+        elementalType
+        hitCount
+        id
+        skillCategory
+        skillTargetType
+        skillType
+    }
 }

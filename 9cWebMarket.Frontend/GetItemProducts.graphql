@@ -1,5 +1,5 @@
-query GetItemProducts( $skip : Int, $take : Int, $itemSubType: ItemSubType, $sortBy : ProductSortBy , $sortDirection: SortDirection ) {
-    products(skip: $skip, take: $take, filter: { itemSubType: $itemSubType, 
+query GetItemProducts( $skip : Int $itemSubType: ItemSubType, $sortBy : ProductSortBy , $sortDirection: SortDirection ) {
+    products(skip: $skip, take: 12, filter: { itemSubType: $itemSubType, 
         itemType: EQUIPMENT productType: NON_FUNGIBLE
         sortBy: $sortBy sortDirection: $sortDirection
     }) {

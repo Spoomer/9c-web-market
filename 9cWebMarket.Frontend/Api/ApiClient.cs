@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.Extensions.Options;
 using NineCWebMarket.Frontend.Configuration;
 using NineCWebMarket.Frontend.Models.Api;
@@ -28,6 +29,7 @@ public class ApiClient : IApiClient
 
         return _planets.Keys;
     }
+
     public async Task<MarketHistory?> GetMarketHistoryAsync(string planet, string? before = null)
     {
         var httpClient = await CreateMarketHistoryHttpClient(planet);
@@ -69,30 +71,6 @@ public class ApiClient : IApiClient
         {
             _semaphore.Release();
         }
-    }
-
-    private async Task<HttpClient?> CreateMarketHttpClient(string planetName)
-    {
-        var httpClient = _httpClientFactory.CreateClient();
-        if (_planets is null || _planets.Count == 0)
-        {
-            await InitPlanetsAsync();
-            if (_planets is null) return null;
-        }
-
-        if (!_planets.TryGetValue(planetName, out var planet))
-        {
-            return null;
-        }
-
-        if (planet.RpcEndpoints.MarketRest.Count == 0)
-        {
-            return null;
-        }
-
-        httpClient.BaseAddress = new Uri(planet.RpcEndpoints.MarketRest[0]);
-
-        return httpClient;
     }
 
     private async Task<HttpClient?> CreateMarketHistoryHttpClient(string planetName)

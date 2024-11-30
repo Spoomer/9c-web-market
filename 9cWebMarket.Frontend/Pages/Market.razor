@@ -1,0 +1,257 @@
+@page "/Market"
+@using Microsoft.AspNetCore.Components.WebAssembly.Hosting
+@using NineCWebMarket.Frontend.Models.Extensions
+@using NineCWebMarket.Frontend.Services.Interfaces
+@using SortDirection = NineCWebMarket.Frontend.SortDirection
+@inject IItemNameService ItemNameService
+@inject IWebAssemblyHostEnvironment HostEnvironment
+@inject IJSRuntime JsRuntime
+@inject NavigationManager NavigationManager
+<div class="container" style="scroll-behavior: smooth">
+
+    <h3>Mimir Market</h3>
+    <div id="header" class="d-flex justify-content-evenly">
+
+        <div id="categories" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
+            <h4>Category</h4>
+            @for (int i = 6; i <= 10; i++)
+            {
+                var itemSubType = (ItemSubType)i;
+                var buttonColor = itemSubType == _subtype ? "btn-primary" : "btn-secondary";
+                <button class="btn badge @buttonColor m-1" @onclick="() => Refresh(itemSubType)">@itemSubType</button>
+            }
+        </div>
+        <div id="sorting" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
+            <h4>Sorting</h4>
+            @foreach (var productSortBy in Enum.GetValues<ProductSortBy>())
+            {
+                var buttonColor = productSortBy == _sortBy ? "btn-primary" : "btn-secondary";
+
+                <button class="btn badge @buttonColor m-1" @onclick="() => Refresh(productSortBy)">
+                    @productSortBy
+                    @if (_sortBy == productSortBy)
+                    {
+                        @if (_sortDirection == SortDirection.Ascending)
+                        {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 class="bi bi-caret-up-fill" viewBox="0 0 16 16">
+                                <path
+                                    d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
+                            </svg>
+                        }
+                        else
+                        {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 class="bi bi-caret-down-fill" viewBox="0 0 16 16">
+                                <path
+                                    d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                            </svg>
+                        }
+                    }
+                </button>
+            }
+        </div>
+    </div>
+    <div id="list" class="mt-4">
+        @if ((int)_subtype >= 6 && (int)_subtype <= 10)
+        {
+            if (_loading)
+            {
+                <LoadingEntries/>
+            }
+            else
+            {
+                <UseGetItemProducts Context="results" Strategy="ExecutionStrategy.CacheFirst" Skip="Skip"
+                                    ItemSubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection"
+                                    @ref="_useGetItemProducts">
+                    <ChildContent>
+
+                        @if (results.Products?.Items is not null)
+                        {
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2">
+                                @foreach (var obj in results.Products.Items)
+                                {
+                                    if (obj is null || obj.Object is not IGetItemProducts_Products_Items_Object_ItemProduct context)
+                                    {
+                                        continue;
+                                    }
+
+                                    <div class="col d-flex mb-2">
+                                        <ItemPicture
+                                            ItemPictureProperties="@context.TradableItem?.ToItemPictureProperties()"
+                                            Class="me-3"></ItemPicture>
+                                        <div class="d-flex flex-column">
+                                            <div class="d-flex mb-2">
+                                                <a href="/itemdetails/@(context.TradableItem?.Id)"
+                                                   class="me-3">@GetItemName(context)</a>
+                                                <PriceDisplayWithUnitPrice Price="context.Price.Quantity.ToInt()"
+                                                                           UnitPrice="obj.UnitPrice ?? 0" Class="me-3"/>
+                                            </div>
+                                            <div class="row row-cols-2 justify-content-between">
+                                                <div name="combatPoints" class="col">
+                                                    <span class="text-nowrap">@obj.CombatPoint CP</span>
+                                                    @if (obj is { CombatPoint: > 0 })
+                                                    {
+                                                        <div>(~@(obj.CombatPoint / context.Price.Quantity.ToInt(1)) CP/
+                                                            <img
+                                                                alt="Gold"
+                                                                src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png"
+                                                                style="width: 16px;"/>)
+                                                        </div>
+                                                    }
+                                                </div>
+                                                <div name="crystals" class="col">
+                                                    <span class="text-nowrap">
+                                                        @obj.Crystal
+                                                        <img alt="Crystal"
+                                                             src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png"
+                                                             style="width: 16px;"/>
+                                                    </span>
+                                                    @if (obj is { Crystal: > 0 })
+                                                    {
+                                                        <div>(@obj.CrystalPerPrice
+                                                            <img alt="Crystal"
+                                                                 src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png"
+                                                                 style="width: 16px;"/>/
+                                                            <img
+                                                                alt="NCG"
+                                                                src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png"
+                                                                style="width: 16px;"/>)
+                                                        </div>
+                                                    }
+                                                </div>
+
+                                                @if (!string.IsNullOrEmpty(context.SellerAgentAddress))
+                                                {
+                                                    <div name="seller" class="text-nowrap">
+                                                        <b>Seller:</b> @(context.SellerAgentAddress[..8])
+                                                    </div>
+                                                }
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                }
+
+                            </div>
+                        }
+
+
+                    </ChildContent>
+                    <LoadingContent>
+                        <LoadingEntries/>
+                    </LoadingContent>
+                </UseGetItemProducts>
+            }
+        }
+        else
+        {
+            <p>This item type isn't implemented yet..</p>
+        }
+        <div id="pager-bottom" class="d-flex justify-content-between sticky-bottom bg-body">
+            <button class="btn btn-primary @DisabledClass" @onclick="OnClickBack">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-arrow-left" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                          d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+                </svg>
+            </button>
+            <div class="align-content-center">
+                Page @(_currentPageIndex + 1)
+            </div>
+            <button class="btn btn-primary" @onclick="OnClickNext">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-arrow-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                          d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ItemSubType _subtype = ItemSubType.Armor;
+    private const int Take = 12;
+    private int _currentPageIndex = 0;
+    private int Skip => Take * _currentPageIndex;
+    private ProductSortBy _sortBy = ProductSortBy.Cp;
+    private SortDirection _sortDirection = SortDirection.Descending;
+    private UseGetItemProducts? _useGetItemProducts;
+    private bool _loading = false;
+    private string DisabledClass => _currentPageIndex == 0 ? "disabled" : "";
+
+    public override async Task SetParametersAsync(ParameterView parameters)
+    {
+        parameters.SetParameterProperties(this);
+        await InitAsync();
+        await base.SetParametersAsync(ParameterView.Empty);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JsRuntime.InvokeVoidAsync("window.helper.withContext.registerViewportChangeCallback", DotNetObjectReference.Create(this));
+        }
+    }
+
+    private async Task InitAsync()
+    {
+        await ItemNameService.InitAsync();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (_loading)
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+
+        base.OnAfterRender(firstRender);
+    }
+
+    private string? GetItemName(IGetItemProducts_Products_Items_Object_ItemProduct itemProduct)
+    {
+        if (itemProduct.TradableItem is null) return null;
+        return ItemNameService.GetValueOrDefault(itemProduct.TradableItem.Id);
+    }
+
+    private void Refresh(ItemSubType itemSubType)
+    {
+        _subtype = itemSubType;
+        StateHasChanged();
+    }
+
+    private void Refresh(ProductSortBy productSortBy)
+    {
+        if (_sortBy == productSortBy)
+        {
+            _sortDirection = _sortDirection == SortDirection.Ascending ? SortDirection.Descending : SortDirection.Ascending;
+        }
+        else
+        {
+            _sortBy = productSortBy;
+            _sortDirection = SortDirection.Ascending;
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnClickNext()
+    {
+        _currentPageIndex++;
+        _loading = true;
+        NavigationManager.NavigateTo(NavigationManager.Uri);
+    }
+
+    private void OnClickBack()
+    {
+        _currentPageIndex--;
+        _loading = true;
+        NavigationManager.NavigateTo(NavigationManager.Uri);
+    }
+
+}

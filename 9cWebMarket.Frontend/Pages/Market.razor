@@ -6,7 +6,8 @@
 @inject IItemNameService ItemNameService
 @inject IWebAssemblyHostEnvironment HostEnvironment
 @inject IJSRuntime JsRuntime
-<div class="container">
+@inject NavigationManager NavigationManager
+<div class="container" style="scroll-behavior: smooth">
 
     <h3>Mimir Market</h3>
     <div id="header" class="d-flex justify-content-evenly">
@@ -54,113 +55,118 @@
     <div id="list" class="mt-4">
         @if ((int)_subtype >= 6 && (int)_subtype <= 10)
         {
-            <UseGetItemProducts Context="results" Strategy="ExecutionStrategy.CacheFirst" Skip="Skip"
-                                ItemSubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection">
-                <ChildContent>
-                    
-                    @if (results.Products?.Items is not null)
-                    {
-                        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3">
-                            @foreach (var obj in results.Products.Items)
-                            {
-                                if (obj is null || obj.Object is not IGetItemProducts_Products_Items_Object_ItemProduct context)
-                                {
-                                    continue;
-                                }
+            if (_loading)
+            {
+                <LoadingEntries/>
+            }
+            else
+            {
+                <UseGetItemProducts Context="results" Strategy="ExecutionStrategy.CacheFirst" Skip="Skip"
+                                    ItemSubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection"
+                                    @ref="_useGetItemProducts">
+                    <ChildContent>
 
-                                <div class="col d-flex mb-2 border-bottom">
-                                    <ItemPicture
-                                        ItemPictureProperties="@context.TradableItem?.ToItemPictureProperties()"
-                                        Class="me-3"></ItemPicture>
-                                    <div class="d-flex flex-column">
-                                        <div class="d-flex mb-2">
-                                            <a href="/itemdetails/@(context.TradableItem?.Id)"
-                                               class="me-3">@GetItemName(context)</a>
-                                            <PriceDisplayWithUnitPrice Price="context.Price.Quantity.ToInt()"
-                                                                       UnitPrice="obj.UnitPrice ?? 0" Class="me-3"/>
-                                        </div>
-                                        <div class="d-flex flex-column flex-sm-column flex-md-row mb-2 flex-wrap">
-                                            <div id="combatPoints" class="me-3 d-flex">
-                                                <span class="me-1">@obj.CombatPoint CP</span>
-                                                @if (obj is { CombatPoint: > 0 })
-                                                {
-                                                    <div>(~@(obj.CombatPoint / context.Price.Quantity.ToInt(1)) CP/
-                                                        <img
-                                                            alt="Gold"
-                                                            src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png"
-                                                            style="width: 16px;"/>)
-                                                    </div>
-                                                }
+                        @if (results.Products?.Items is not null)
+                        {
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2">
+                                @foreach (var obj in results.Products.Items)
+                                {
+                                    if (obj is null || obj.Object is not IGetItemProducts_Products_Items_Object_ItemProduct context)
+                                    {
+                                        continue;
+                                    }
+
+                                    <div class="col d-flex mb-2">
+                                        <ItemPicture
+                                            ItemPictureProperties="@context.TradableItem?.ToItemPictureProperties()"
+                                            Class="me-3"></ItemPicture>
+                                        <div class="d-flex flex-column">
+                                            <div class="d-flex mb-2">
+                                                <a href="/itemdetails/@(context.TradableItem?.Id)"
+                                                   class="me-3">@GetItemName(context)</a>
+                                                <PriceDisplayWithUnitPrice Price="context.Price.Quantity.ToInt()"
+                                                                           UnitPrice="obj.UnitPrice ?? 0" Class="me-3"/>
                                             </div>
-                                            <div id="crystals" class="me-3 d-flex">
-                                                <span class="me-1">
-                                                    @obj.Crystal
-                                                    <img alt="Crystal"
-                                                         src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png"
-                                                         style="width: 16px;"/>
-                                                </span>
-                                                @if (obj is { Crystal: > 0 })
-                                                {
-                                                    <div>(@obj.CrystalPerPrice
+                                            <div class="row row-cols-2 justify-content-between">
+                                                <div name="combatPoints" class="col">
+                                                    <span class="text-nowrap">1000000000 CP</span>
+                                                    @if (obj is { CombatPoint: > 0 })
+                                                    {
+                                                        <div>(~@(obj.CombatPoint / context.Price.Quantity.ToInt(1)) CP/
+                                                            <img
+                                                                alt="Gold"
+                                                                src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png"
+                                                                style="width: 16px;"/>)
+                                                        </div>
+                                                    }
+                                                </div>
+                                                <div name="crystals" class="col">
+                                                    <span class="text-nowrap">
+                                                        100000000
                                                         <img alt="Crystal"
                                                              src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png"
-                                                             style="width: 16px;"/>/
-                                                        <img
-                                                            alt="NCG"
-                                                            src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png"
-                                                            style="width: 16px;"/>)
+                                                             style="width: 16px;"/>
+                                                    </span>
+                                                    @if (obj is { Crystal: > 0 })
+                                                    {
+                                                        <div>(@obj.CrystalPerPrice
+                                                            <img alt="Crystal"
+                                                                 src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png"
+                                                                 style="width: 16px;"/>/
+                                                            <img
+                                                                alt="NCG"
+                                                                src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png"
+                                                                style="width: 16px;"/>)
+                                                        </div>
+                                                    }
+                                                </div>
+
+                                                @if (!string.IsNullOrEmpty(context.SellerAgentAddress))
+                                                {
+                                                    <div name="seller" class="text-nowrap">
+                                                        <b>Seller:</b> @(context.SellerAgentAddress[..8])
                                                     </div>
                                                 }
                                             </div>
 
-                                            @if (!string.IsNullOrEmpty(context.SellerAgentAddress))
-                                            {
-                                                <div class="me-3" id="seller">
-                                                    <b>Seller:</b> @(context.SellerAgentAddress[..8])
-                                                </div>
-                                            }
                                         </div>
 
                                     </div>
-
-                                </div>
-                            }
-
-                        </div>
-                    }
-
-
-                </ChildContent>
-                <LoadingContent>
-                    <div class="d-flex mb-2" style="height: @(_elementHeight)px">
-                        <svg height="58" width="58" class="placeholder-glow me-3">
-                            <rect width="100%" height="100%" fill="grey"></rect>
-                        </svg>
-                        <div class="flex-column">
-                            <div class="d-flex mb-2 placeholder-glow">
-                                <span class="placeholder me-3" style="width: 100px"></span>
-                                <span class="placeholder me-3" style="width: 50px"></span>
+                                }
 
                             </div>
-                            <div class="d-flex placeholder-glow">
-                                <span class="placeholder me-3" style="width: 100px"></span>
-                                <span class="placeholder me-3" style="width: 100px"></span>
-                            </div>
-                        </div>
-                    </div>
-                </LoadingContent>
-            </UseGetItemProducts>
+                        }
+
+
+                    </ChildContent>
+                    <LoadingContent>
+                        <LoadingEntries/>
+                    </LoadingContent>
+                </UseGetItemProducts>
+            }
         }
         else
         {
             <p>This item type isn't implemented yet..</p>
         }
-        <div id="pager" class="d-flex justify-content-between">
-            <button class="btn btn-primary @DisabledClass" @onclick="() => _currentPageIndex--">back</button>
+        <div id="pager-bottom" class="d-flex justify-content-between sticky-bottom bg-body">
+            <button class="btn btn-primary @DisabledClass" @onclick="OnClickBack">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-arrow-left" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                          d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
+                </svg>
+            </button>
             <div class="align-content-center">
                 Page @(_currentPageIndex + 1)
             </div>
-            <button class="btn btn-primary" @onclick="() => _currentPageIndex++">next</button>
+            <button class="btn btn-primary" @onclick="OnClickNext">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-arrow-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                          d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
+                </svg>
+            </button>
         </div>
     </div>
 </div>
@@ -172,12 +178,8 @@
     private int Skip => Take * _currentPageIndex;
     private ProductSortBy _sortBy = ProductSortBy.Cp;
     private SortDirection _sortDirection = SortDirection.Descending;
-
-    private const float LargeDisplayElementHeight = 64f;
-    private const float MediumDisplayElementHeight = 128f;
-    private const float SmallDisplayElementHeight = 160f;
-    private float _elementHeight = LargeDisplayElementHeight;
-
+    private UseGetItemProducts? _useGetItemProducts;
+    private bool _loading = false;
     private string DisabledClass => _currentPageIndex == 0 ? "disabled" : "";
 
     public override async Task SetParametersAsync(ParameterView parameters)
@@ -186,26 +188,6 @@
         await InitAsync();
         await base.SetParametersAsync(ParameterView.Empty);
     }
-
-    [JSInvokable]
-    public void OnResize(int width, int height)
-    {
-        switch (width)
-        {
-            case < 768:
-                _elementHeight = SmallDisplayElementHeight;
-                break;
-            case < 992:
-                _elementHeight = MediumDisplayElementHeight;
-                break;
-            default:
-                _elementHeight = LargeDisplayElementHeight;
-                break;
-        }
-
-        StateHasChanged();
-    }
-
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -218,6 +200,17 @@
     private async Task InitAsync()
     {
         await ItemNameService.InitAsync();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (_loading)
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+
+        base.OnAfterRender(firstRender);
     }
 
     private string? GetItemName(IGetItemProducts_Products_Items_Object_ItemProduct itemProduct)
@@ -245,6 +238,20 @@
         }
 
         StateHasChanged();
+    }
+
+    private void OnClickNext()
+    {
+        _currentPageIndex++;
+        _loading = true;
+        NavigationManager.NavigateTo(NavigationManager.Uri);
+    }
+
+    private void OnClickBack()
+    {
+        _currentPageIndex--;
+        _loading = true;
+        NavigationManager.NavigateTo(NavigationManager.Uri);
     }
 
 }

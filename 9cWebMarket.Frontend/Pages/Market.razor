@@ -89,7 +89,7 @@
                                             </div>
                                             <div class="row row-cols-2 justify-content-between">
                                                 <div name="combatPoints" class="col">
-                                                    <span class="text-nowrap">1000000000 CP</span>
+                                                    <span class="text-nowrap">@obj.CombatPoint CP</span>
                                                     @if (obj is { CombatPoint: > 0 })
                                                     {
                                                         <div>(~@(obj.CombatPoint / context.Price.Quantity.ToInt(1)) CP/
@@ -102,7 +102,7 @@
                                                 </div>
                                                 <div name="crystals" class="col">
                                                     <span class="text-nowrap">
-                                                        100000000
+                                                        @obj.Crystal
                                                         <img alt="Crystal"
                                                              src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png"
                                                              style="width: 16px;"/>

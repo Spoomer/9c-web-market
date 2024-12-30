@@ -1,4 +1,5 @@
 @page "/Market"
+@using GraphQL.Client.Abstractions.Utilities
 @using Microsoft.AspNetCore.Components.WebAssembly.Hosting
 @using Nekoyume.Model.Item
 @using NineCWebMarket.Frontend.Api
@@ -11,10 +12,19 @@
 @inject IJSRuntime JsRuntime
 @inject NavigationManager NavigationManager
 @inject IMimirService MimirService
+@inject IApiClient ApiClient
 
 <div class="container" style="scroll-behavior: smooth">
-
-    <h3>Heimdall Market</h3>
+    <div class="input-group mb-3" style="min-width: 200px; height: 25%">
+        <label class="input-group-text" for="planet-select">Planet</label>
+        <select class="form-select" id="planet-select" @onchange="OnPlanetSelectChange">
+            @foreach (var planet in _planets)
+            {
+                <option value="@planet" selected="@(planet == _selectedPlanet)">@planet</option>
+            }
+        </select>
+    </div>
+    <h3>@_selectedPlanet.Capitalize() Market</h3>
     <div id="header" class="d-flex justify-content-evenly">
 
         <div id="categories" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
@@ -183,7 +193,9 @@
     private IReadOnlyList<ProductItem>? _itemProducts;
     private bool _loading = false;
     private string DisabledClass => _currentPageIndex == 0 ? "disabled" : "";
-
+    private string _selectedPlanet = "heimdall";
+    private IReadOnlyCollection<string> _planets = [];
+    
     public override async Task SetParametersAsync(ParameterView parameters)
     {
         parameters.SetParameterProperties(this);
@@ -201,7 +213,7 @@
         if (_loading)
         {
             _loading = false;
-            _itemProducts = await MimirService.GetItemProductsAsync("heimdall", Skip, _subtype, _sortBy, _sortDirection);
+            _itemProducts = await MimirService.GetItemProductsAsync(_selectedPlanet, Skip, _subtype, _sortBy, _sortDirection);
 
             StateHasChanged();
         }
@@ -209,10 +221,55 @@
 
     private async Task InitAsync()
     {
-        await ItemNameService.InitAsync();
-        _itemProducts = await MimirService.GetItemProductsAsync("heimdall", Skip, _subtype, _sortBy, _sortDirection);
-    }
+        if (_planets.Count != 0)
+        {
+            return;
+        }
 
+        _planets = await ApiClient.GetPlanetsNamesAsync();
+        //no thor support
+        _planets = _planets.Where(x => x != "thor").ToArray();
+        
+        SetSelectedPlanetFromUrl();
+        
+        await ItemNameService.InitAsync();
+        _itemProducts = await MimirService.GetItemProductsAsync(_selectedPlanet, Skip, _subtype, _sortBy, _sortDirection);
+    }
+    
+    private bool SetSelectedPlanetFromUrl()
+    {
+        var uri = new Uri(NavigationManager.Uri, UriKind.Absolute);
+
+        if (!uri.Fragment.StartsWith('#')) return false;
+
+        var planetFromFragment = uri.Fragment[1..];
+
+        return SetPlanet(planetFromFragment);
+    }
+    
+    private bool SetPlanet(string planet)
+    {
+        if (!_planets.Contains(planet)) return false;
+
+        _selectedPlanet = planet;
+        return true;
+    }
+    
+    private void OnPlanetSelectChange(ChangeEventArgs e)
+    {
+        if (e.Value is string planet)
+        {
+            ChangePlanet(planet);
+        }
+    }
+    
+    private void ChangePlanet(string planet)
+    {
+        SetPlanet(planet);
+        _loading = true;
+        NavigationManager.NavigateTo(NavigationManager.Uri+$"#{planet}");
+    }
+    
     private string? GetItemName(ProductItem productItem)
     {
         return ItemNameService.GetValueOrDefault(productItem.Object.Equipment.Id);

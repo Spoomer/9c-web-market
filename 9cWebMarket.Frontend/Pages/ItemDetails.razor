@@ -10,44 +10,44 @@
     <div class="flex-fill">
         @if (Equipment is not null)
         {
-            <table class="table table-responsive" id="equipment-info-table">
+            <table class="table table-responsive" id="equipment-info-table-@Item?.Object.ProductId">
                 <tbody>
                 <tr>
-                    <td>@nameof(ItemSubType)</td>
-                    <td>@Equipment.ItemSubType</td>
+                    <td class="p-0 p-sm-2">@nameof(ItemSubType)</td>
+                    <td class="p-0 p-sm-2">@Equipment.ItemSubType</td>
                 </tr>
                 <tr>
-                    <td>@nameof(ElementalType)</td>
-                    <td>@Equipment.ElementalType</td>
+                    <td class="p-0 p-sm-2">@nameof(ElementalType)</td>
+                    <td class="p-0 p-sm-2">@Equipment.ElementalType</td>
                 </tr>
                 <tr>
-                    <td>@nameof(Equipment.Grade)</td>
-                    <td>@Equipment.Grade</td>
+                    <td class="p-0 p-sm-2">@nameof(Equipment.Grade)</td>
+                    <td class="p-0 p-sm-2">@Equipment.Grade</td>
                 </tr>
             <tr>
-                <td>@nameof(Equipment.Level)</td>
-                <td>@Equipment.Level</td>
+                <td class="p-0 p-sm-2">@nameof(Equipment.Level)</td>
+                <td class="p-0 p-sm-2">@Equipment.Level</td>
             </tr>
                 @foreach (var stat in Equipment.StatsMap.Value)
                 {
                     <tr>
-                        <td>@stat.Key</td>
-                        <td>@(Math.Round(stat.Value.BaseValue + stat.Value.AdditionalValue))</td>
+                        <td class="p-0 p-sm-2">@stat.Key</td>
+                        <td class="p-0 p-sm-2">@(Math.Round(stat.Value.BaseValue + stat.Value.AdditionalValue))</td>
                     </tr>
                 }
                 @foreach (var skill in Equipment.Skills)
                 {
                     <tr>
-                        <td>@nameof(skill.SkillRow.SkillCategory)</td>
-                        <td>@skill.SkillRow.SkillCategory</td>
+                        <td class="p-0 p-sm-2">@nameof(skill.SkillRow.SkillCategory)</td>
+                        <td class="p-0 p-sm-2">@skill.SkillRow.SkillCategory</td>
                     </tr>
                     <tr>
-                        <td>@nameof(skill.SkillRow.SkillType)</td>
-                        <td>@skill.SkillRow.SkillType</td>
+                        <td class="p-0 p-sm-2">@nameof(skill.SkillRow.SkillType)</td>
+                        <td class="p-0 p-sm-2">@skill.SkillRow.SkillType</td>
                     </tr>
                     <tr>
-                        <td>@nameof(skill.Chance)</td>
-                        <td>@skill.Chance %</td>
+                        <td class="p-0 p-sm-2">@nameof(skill.Chance)</td>
+                        <td class="p-0 p-sm-2">@skill.Chance %</td>
                     </tr>
                 }
                 </tbody>

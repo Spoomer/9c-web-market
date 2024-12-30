@@ -1,12 +1,17 @@
 @page "/Market"
 @using Microsoft.AspNetCore.Components.WebAssembly.Hosting
+@using Nekoyume.Model.Item
+@using NineCWebMarket.Frontend.Api
 @using NineCWebMarket.Frontend.Models.Extensions
+@using NineCWebMarket.Frontend.Models.Mimir
+@using NineCWebMarket.Frontend.Services
 @using NineCWebMarket.Frontend.Services.Interfaces
-@using SortDirection = NineCWebMarket.Frontend.SortDirection
 @inject IItemNameService ItemNameService
 @inject IWebAssemblyHostEnvironment HostEnvironment
 @inject IJSRuntime JsRuntime
 @inject NavigationManager NavigationManager
+@inject IMimirService MimirService
+
 <div class="container" style="scroll-behavior: smooth">
 
     <h3>Heimdall Market</h3>
@@ -18,7 +23,7 @@
             {
                 var itemSubType = (ItemSubType)i;
                 var buttonColor = itemSubType == _subtype ? "btn-primary" : "btn-secondary";
-                <button class="btn badge @buttonColor m-1" @onclick="() => Refresh(itemSubType)">@itemSubType</button>
+                <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(itemSubType)">@itemSubType</button>
             }
         </div>
         <div id="sorting" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
@@ -27,11 +32,11 @@
             {
                 var buttonColor = productSortBy == _sortBy ? "btn-primary" : "btn-secondary";
 
-                <button class="btn badge @buttonColor m-1" @onclick="() => Refresh(productSortBy)">
+                <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(productSortBy)">
                     @productSortBy
                     @if (_sortBy == productSortBy)
                     {
-                        @if (_sortDirection == SortDirection.Ascending)
+                        @if (_sortDirection == SortDirection.ASCENDING)
                         {
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                  class="bi bi-caret-up-fill" viewBox="0 0 16 16">
@@ -61,38 +66,29 @@
             }
             else
             {
-                <UseGetItemProducts Context="results" Strategy="ExecutionStrategy.CacheFirst" Skip="Skip"
-                                    ItemSubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection"
-                                    @ref="_useGetItemProducts">
-                    <ChildContent>
-
-                        @if (results.Products?.Items is not null)
+                
+                        @if (_itemProducts is not null)
                         {
-                            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2">
-                                @foreach (var obj in results.Products.Items)
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2 ">
+                                @foreach (var item in _itemProducts)
                                 {
-                                    if (obj is null || obj.Object is not IGetItemProducts_Products_Items_Object_ItemProduct context)
-                                    {
-                                        continue;
-                                    }
 
-                                    <div class="col d-flex mb-2">
+                                    <div class="col d-flex mb-2 border border-1 rounded">
                                         <ItemPicture
-                                            ItemPictureProperties="@context.TradableItem?.ToItemPictureProperties()"
+                                            ItemPictureProperties="@item.Object.Equipment.ToItemPictureProperties()"
                                             Class="me-3"></ItemPicture>
-                                        <div class="d-flex flex-column">
+                                        <div class="d-flex flex-column flex-grow-1">
                                             <div class="d-flex mb-2">
-                                                <a href="/itemdetails/@(context.TradableItem?.Id)"
-                                                   class="me-3">@GetItemName(context)</a>
-                                                <PriceDisplayWithUnitPrice Price="context.Price.Quantity.ToInt()"
-                                                                           UnitPrice="obj.UnitPrice ?? 0" Class="me-3"/>
+                                                <span class="me-3 fw-bold">@GetItemName(item)</span>
+                                                <PriceDisplayWithUnitPrice Price="item.Object.Price.Quantity.ToInt()"
+                                                                           UnitPrice="item.UnitPrice ?? 0M" Class="me-3"/>
                                             </div>
-                                            <div class="row row-cols-2 justify-content-between">
+                                            <div id="product-information-@item.Object.ProductId" class="row row-cols-2 justify-content-between">
                                                 <div name="combatPoints" class="col">
-                                                    <span class="text-nowrap">@obj.CombatPoint CP</span>
-                                                    @if (obj is { CombatPoint: > 0 })
+                                                    <span class="text-nowrap">@(item.CombatPoint?.ToString() ?? "?") CP</span>
+                                                    @if (item is { CombatPoint: > 0 })
                                                     {
-                                                        <div>(~@(obj.CombatPoint / context.Price.Quantity.ToInt(1)) CP/
+                                                        <div>(~@(item.CombatPoint / item.Object.Price.Quantity.ToInt(1)) CP/
                                                             <img
                                                                 alt="Gold"
                                                                 src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png"
@@ -100,16 +96,16 @@
                                                         </div>
                                                     }
                                                 </div>
-                                                <div name="crystals" class="col">
+                                                <div name="crystals" class="col flex-grow-1">
                                                     <span class="text-nowrap">
-                                                        @obj.Crystal
+                                                        @(item.Crystal?.ToString() ?? "?")
                                                         <img alt="Crystal"
                                                              src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png"
                                                              style="width: 16px;"/>
                                                     </span>
-                                                    @if (obj is { Crystal: > 0 })
+                                                    @if (item is { Crystal: > 0 })
                                                     {
-                                                        <div>(@obj.CrystalPerPrice
+                                                        <div>(@item.CrystalPerPrice
                                                             <img alt="Crystal"
                                                                  src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png"
                                                                  style="width: 16px;"/>/
@@ -121,28 +117,34 @@
                                                     }
                                                 </div>
 
-                                                @if (!string.IsNullOrEmpty(context.SellerAgentAddress))
+                                                @if (!string.IsNullOrEmpty(item.Object.SellerAgentAddress))
                                                 {
                                                     <div name="seller" class="text-nowrap">
-                                                        <b>Seller:</b> @(context.SellerAgentAddress[..8])
+                                                        <b>Seller:</b> @(item.Object.SellerAgentAddress[..8])
                                                     </div>
                                                 }
                                             </div>
+                                            <div class="accordion accordion-flush" >
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header">
+                                                        <button class="accordion-button btn-sm collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@item.Object.ProductId" aria-expanded="false" aria-controls="collapse-@item.Object.ProductId">
+                                                            Details
+                                                        </button>
+                                                    </h2>
 
+                                                    <div class="collapse" id="collapse-@item.Object.ProductId">
+                                                        <div>
+                                                            <ItemDetails Item="item"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-
                                     </div>
                                 }
 
                             </div>
                         }
-
-
-                    </ChildContent>
-                    <LoadingContent>
-                        <LoadingEntries/>
-                    </LoadingContent>
-                </UseGetItemProducts>
             }
         }
         else
@@ -176,9 +178,9 @@
     private const int Take = 12;
     private int _currentPageIndex = 0;
     private int Skip => Take * _currentPageIndex;
-    private ProductSortBy _sortBy = ProductSortBy.Cp;
-    private SortDirection _sortDirection = SortDirection.Descending;
-    private UseGetItemProducts? _useGetItemProducts;
+    private ProductSortBy _sortBy = ProductSortBy.CP;
+    private SortDirection _sortDirection = SortDirection.DESCENDING;
+    private IReadOnlyList<ProductItem>? _itemProducts;
     private bool _loading = false;
     private string DisabledClass => _currentPageIndex == 0 ? "disabled" : "";
 
@@ -195,54 +197,53 @@
         {
             await JsRuntime.InvokeVoidAsync("window.helper.withContext.registerViewportChangeCallback", DotNetObjectReference.Create(this));
         }
+        
+        if (_loading)
+        {
+            _loading = false;
+            _itemProducts = await MimirService.GetItemProductsAsync("heimdall", Skip, _subtype, _sortBy, _sortDirection);
+
+            StateHasChanged();
+        }
     }
 
     private async Task InitAsync()
     {
         await ItemNameService.InitAsync();
+        _itemProducts = await MimirService.GetItemProductsAsync("heimdall", Skip, _subtype, _sortBy, _sortDirection);
     }
 
-    protected override void OnAfterRender(bool firstRender)
+    private string? GetItemName(ProductItem productItem)
     {
-        if (_loading)
-        {
-            _loading = false;
-            StateHasChanged();
-        }
-
-        base.OnAfterRender(firstRender);
-    }
-
-    private string? GetItemName(IGetItemProducts_Products_Items_Object_ItemProduct itemProduct)
-    {
-        if (itemProduct.TradableItem is null) return null;
-        return ItemNameService.GetValueOrDefault(itemProduct.TradableItem.Id);
+        return ItemNameService.GetValueOrDefault(productItem.Object.Equipment.Id);
     }
 
     private void Refresh(ItemSubType itemSubType)
     {
         _subtype = itemSubType;
-        StateHasChanged();
+        _loading = true;
+        NavigationManager.NavigateTo(NavigationManager.Uri);
     }
 
     private void Refresh(ProductSortBy productSortBy)
     {
         if (_sortBy == productSortBy)
         {
-            _sortDirection = _sortDirection == SortDirection.Ascending ? SortDirection.Descending : SortDirection.Ascending;
+            _sortDirection = _sortDirection == SortDirection.ASCENDING ? SortDirection.DESCENDING : SortDirection.ASCENDING;
         }
         else
         {
             _sortBy = productSortBy;
-            _sortDirection = SortDirection.Ascending;
+            _sortDirection = SortDirection.DESCENDING;
         }
-
-        StateHasChanged();
+        _loading = true;
+        NavigationManager.NavigateTo(NavigationManager.Uri);
     }
 
     private void OnClickNext()
     {
         _currentPageIndex++;
+        
         _loading = true;
         NavigationManager.NavigateTo(NavigationManager.Uri);
     }

@@ -18,11 +18,10 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IItemNameService, ItemNameService>();
 builder.Services.AddSingleton<ITickerNameService, TickerNameService>();
 builder.Services.AddSingleton<IApiClient, ApiClient>();
+builder.Services.AddSingleton<IMimirClient, MimirClient>();
+builder.Services.AddSingleton<IMimirService, MimirService>();
+
 builder.Services.AddTransient<BrowserService>();
 builder.Services.AddBlazoredLocalStorage();
-builder.Services.AddMimirClient().ConfigureHttpClient(c =>
-    c.BaseAddress = new Uri(builder.Configuration.GetSection(NineChroniclesEndpoints.SectionName)[nameof(NineChroniclesEndpoints.Mimir)]
-                            ?? throw new ConfigurationException("Mimir Endpoint is missing"))
-);
 var app = builder.Build();
 await app.RunAsync();

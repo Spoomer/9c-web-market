@@ -1,0 +1,100 @@
+@page "/MarketPerAccount"
+@using GraphQL.Client.Abstractions.Utilities
+@using Nekoyume.Model.Item
+@using NineCWebMarket.Frontend.Api
+@using NineCWebMarket.Frontend.Services
+@inject NavigationManager NavigationManager
+@inject IApiClient ApiClient
+@inject NineCapiService MarketService
+
+<div class="container" style="scroll-behavior: smooth">
+    <div class="input-group mb-3" style="min-width: 200px; height: 25%">
+        <label class="input-group-text" for="planet-select">Planet</label>
+        <select class="form-select" id="planet-select" @onchange="OnPlanetSelectChange">
+            @foreach (var planet in _planets)
+            {
+                <option value="@planet" selected="@(planet == _selectedPlanet)">@planet</option>
+            }
+        </select>
+    </div>
+    <h3>@_selectedPlanet.Capitalize() Market</h3>
+    <div id="header" class="d-flex justify-content-evenly">
+        <div class="form-floating mb-3 w-100">
+            <input value="@_avatarAddress" @onchange="OnAvatarAddressChange" type="text" class="form-control" id="floatingInput" placeholder="0x..">
+            <label for="floatingInput">Avatar Address</label>
+        </div>
+    </div>
+</div>
+<MarketList Planet="@_selectedPlanet" SubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection" @bind-Loading="@_loading" MarketService="MarketService"
+            AvatarAddress="@_avatarAddress"/>
+@code {
+    private ItemSubType _subtype = ItemSubType.Armor;
+    private ProductSortBy _sortBy = ProductSortBy.CP;
+    private SortDirection _sortDirection = SortDirection.DESCENDING;
+    private string _selectedPlanet = "heimdall";
+    private IReadOnlyCollection<string> _planets = [];
+    private bool _loading;
+    private string _avatarAddress = "";
+    
+    public override async Task SetParametersAsync(ParameterView parameters)
+    {
+        parameters.SetParameterProperties(this);
+        await InitAsync();
+        await base.SetParametersAsync(ParameterView.Empty);
+    }
+
+    private async Task InitAsync()
+    {
+        if (_planets.Count != 0)
+        {
+            return;
+        }
+
+        _planets = await ApiClient.GetPlanetsNamesAsync();
+        //no thor support
+        _planets = _planets.Where(x => x != "thor").ToArray();
+        
+        SetSelectedPlanetFromUrl();
+    }
+    
+    private bool SetSelectedPlanetFromUrl()
+    {
+        var uri = new Uri(NavigationManager.Uri, UriKind.Absolute);
+
+        if (!uri.Fragment.StartsWith('#')) return false;
+
+        var planetFromFragment = uri.Fragment[1..];
+
+        return SetPlanet(planetFromFragment);
+    }
+    
+    private bool SetPlanet(string planet)
+    {
+        if (!_planets.Contains(planet)) return false;
+
+        _selectedPlanet = planet;
+        return true;
+    }
+    
+    private void OnPlanetSelectChange(ChangeEventArgs e)
+    {
+        if (e.Value is string planet)
+        {
+            ChangePlanet(planet);
+        }
+    }
+    
+    private void ChangePlanet(string planet)
+    {
+        SetPlanet(planet);
+        _loading = true;
+        NavigationManager.NavigateTo(NavigationManager.Uri+$"#{planet}");
+    }
+
+    private async Task OnAvatarAddressChange(ChangeEventArgs arg)
+    {
+        _avatarAddress = arg.Value?.ToString() ?? "";
+        _loading = true;
+    }
+
+}

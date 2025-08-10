@@ -43,6 +43,6 @@ public record TradeItem(
     int? CombatPoint,
     [property: JsonPropertyName("grade")] int? Grade,
     [property: JsonPropertyName("elementalType")]
-    int? ElementalType,
+    int ElementalType,
     [property: JsonPropertyName("setId")] int? SetId
 );

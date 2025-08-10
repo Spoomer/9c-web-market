@@ -10,7 +10,7 @@ namespace NineCWebMarket.Frontend.Models.Mimir.Stats;
 /// </summary>
 public record StatMap
 {
-    public Dictionary<StatType, DecimalStat> Value { get; set; }
+    public Dictionary<StatType, DecimalStat> Value { get; set; } = [];
 }
 
 public class StatMapJsonConverter : JsonConverter<StatMap>

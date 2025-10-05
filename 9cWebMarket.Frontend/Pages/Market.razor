@@ -1,30 +1,41 @@
 @page "/Market"
 @using GraphQL.Client.Abstractions.Utilities
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Primitives
 @using Nekoyume.Model.Item
 @using NineCWebMarket.Frontend.Api
 @using NineCWebMarket.Frontend.Services
 @inject NavigationManager NavigationManager
 @inject IApiClient ApiClient
-@inject IMarketService MarketService
+@inject IEnumerable<IMarketService> MarketServices
 
 <div class="container" style="scroll-behavior: smooth">
+    <div class="input-group mb-3" style="min-width: 200px; height: 25%">
+        <label class="input-group-text" for="planet-select">MarketService</label>
+        <select class="form-select" id="endpoint-select" @onchange="OnEndpointSelectChange">
+            @foreach (var service in _marketServices.Keys)
+            {
+                <option value="@service" selected="@(service == SelectedMarketService)">@service</option>
+            }
+        </select>
+    </div>
     <div class="input-group mb-3" style="min-width: 200px; height: 25%">
         <label class="input-group-text" for="planet-select">Planet</label>
         <select class="form-select" id="planet-select" @onchange="OnPlanetSelectChange">
             @foreach (var planet in _planets)
             {
-                <option value="@planet" selected="@(planet == _selectedPlanet)">@planet</option>
+                <option value="@planet" selected="@(planet == SelectedPlanet)">@planet</option>
             }
         </select>
     </div>
-    <h3>@_selectedPlanet.Capitalize() Market</h3>
+    <h3>@SelectedPlanet.Capitalize() Market from @SelectedMarketService.Capitalize()</h3>
     <div id="header" class="d-flex justify-content-evenly">
 
         <div id="categories" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
             <h4>Category</h4>
             @for (int i = 6; i <= 10; i++)
             {
-                var itemSubType = (ItemSubType)i;
+                var itemSubType = (ItemSubType) i;
                 var buttonColor = itemSubType == _subtype ? "btn-primary" : "btn-secondary";
                 <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(itemSubType)">@itemSubType</button>
             }
@@ -60,18 +71,27 @@
             }
         </div>
     </div>
-   
+
 </div>
-<MarketList Planet="@_selectedPlanet" SubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection" @bind-Loading="@_loading"
-            MarketService="MarketService"/>
+<MarketList Planet="@SelectedPlanet" SubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection" @bind-Loading="@_loading"
+            MarketService="_marketServices[SelectedMarketService]"/>
 @code {
     private ItemSubType _subtype = ItemSubType.Armor;
     private ProductSortBy _sortBy = ProductSortBy.CP;
     private SortDirection _sortDirection = SortDirection.DESCENDING;
-    private string _selectedPlanet = "heimdall";
     private IReadOnlyCollection<string> _planets = [];
     private bool _loading;
-    
+    private Dictionary<string, IMarketService> _marketServices = new();
+    private const string PlanetQueryKey = "planet";
+    private const string MarketServiceQueryKey = "marketService";
+    private const string DefaultPlanet = "heimdall";
+    private const string DefaultMarketService = "9CAPI";
+    [SupplyParameterFromQuery(Name = PlanetQueryKey)]
+    public string SelectedPlanet { get; set; } = DefaultPlanet;
+
+    [SupplyParameterFromQuery(Name = MarketServiceQueryKey)]
+    public string SelectedMarketService { get; set; } = DefaultMarketService;
+
     public override async Task SetParametersAsync(ParameterView parameters)
     {
         parameters.SetParameterProperties(this);
@@ -89,26 +109,58 @@
         _planets = await ApiClient.GetPlanetsNamesAsync();
         //no thor support
         _planets = _planets.Where(x => x != "thor").ToArray();
+        _marketServices = MarketServices.ToDictionary(x => x.Name);
         
-        SetSelectedPlanetFromUrl();
+        ValidateQuery();
     }
-    
-    private bool SetSelectedPlanetFromUrl()
+
+    private void ValidateQuery()
     {
-        var uri = new Uri(NavigationManager.Uri, UriKind.Absolute);
-
-        if (!uri.Fragment.StartsWith('#')) return false;
-
-        var planetFromFragment = uri.Fragment[1..];
-
-        return SetPlanet(planetFromFragment);
+        if (string.IsNullOrWhiteSpace(SelectedPlanet) || !_planets.Contains(SelectedPlanet)) SelectedPlanet = DefaultPlanet;
+        if (string.IsNullOrWhiteSpace(SelectedMarketService) ||!_marketServices.ContainsKey(SelectedMarketService)) SelectedMarketService = DefaultMarketService;
     }
-    
+
     private bool SetPlanet(string planet)
     {
         if (!_planets.Contains(planet)) return false;
 
-        _selectedPlanet = planet;
+        SelectedPlanet = planet;
+        return true;
+    }
+    
+    private void OnEndpointSelectChange(ChangeEventArgs e)
+    {
+        if (e.Value is string serviceName)
+        {
+            ChangeMarketService(serviceName);
+        }
+    }
+
+    private void ChangeMarketService(string service)
+    {
+        SetMarketService(service);
+        _loading = true;
+        NavigateToNewUrl();
+    }
+
+    private void NavigateToNewUrl()
+    {
+        var uriBuilder = new UriBuilder(NavigationManager.Uri);
+        var query = QueryHelpers.ParseNullableQuery(uriBuilder.Query);
+        query ??= new Dictionary<string, StringValues>();
+        query[PlanetQueryKey] = SelectedPlanet;
+        query[MarketServiceQueryKey] = SelectedMarketService;
+        uriBuilder.Query = string.Empty; 
+
+        var newUrl = QueryHelpers.AddQueryString(uriBuilder.Uri.AbsoluteUri, query);
+        
+        NavigationManager.NavigateTo(newUrl);
+    }
+
+    private bool SetMarketService(string service)
+    {
+        if (!_marketServices.ContainsKey(service)) return false;
+        SelectedMarketService = service;
         return true;
     }
     
@@ -124,7 +176,7 @@
     {
         SetPlanet(planet);
         _loading = true;
-        NavigationManager.NavigateTo(NavigationManager.Uri+$"#{planet}");
+        NavigateToNewUrl();
     }
 
     private void Refresh(ItemSubType itemSubType)

@@ -133,10 +133,10 @@
     [Parameter] public ProductSortBy SortBy { get; set; } = ProductSortBy.CP;
     [Parameter] public SortDirection SortDirection { get; set; } = SortDirection.DESCENDING;
     [Parameter] public string Planet { get; set; } = "heimdall";
-    [Parameter] public string AvatarAddress { get; set; }
+    [Parameter] public string? AvatarAddress { get; set; }
     [Parameter] public bool Loading { get; set; }
     [Parameter] public EventCallback<bool> LoadingChanged { get; set; }
-    [Parameter] public IMarketService MarketService { get; set; }
+    [Parameter] public IMarketService? MarketService { get; set; }
     private const int Take = 12;
     private int _currentPageIndex;
     private int Skip => Take * _currentPageIndex;
@@ -157,10 +157,18 @@
             await JsRuntime.InvokeVoidAsync("window.helper.withContext.registerViewportChangeCallback", DotNetObjectReference.Create(this));
         }
 
-        if (Loading)
+        if (Loading && MarketService is not null)
         {
             await UpdateLoadingState(false);
-            _itemProducts = await MarketService.GetItemProductsAsync(Planet, Skip, Take, SubType, SortBy, SortDirection, AvatarAddress);
+            if (AvatarAddress is null)
+            {
+                _itemProducts = await MarketService.GetItemProductsAsync(Planet, Skip, Take, SubType, SortBy, SortDirection);
+
+            }
+            else
+            {
+                _itemProducts = await MarketService.GetProductsByAvatarAsync(Planet, Skip, Take, SubType, SortBy, SortDirection, AvatarAddress);
+            }
 
             StateHasChanged();
         }
@@ -175,7 +183,15 @@
     private async Task InitAsync()
     {
         await ItemNameService.InitAsync();
-        _itemProducts = await MarketService.GetItemProductsAsync(Planet, Skip, Take, SubType, SortBy, SortDirection, AvatarAddress);
+        if(MarketService is null) return;
+        if (AvatarAddress is null)
+        {
+            _itemProducts = await MarketService.GetItemProductsAsync(Planet, Skip, Take, SubType, SortBy, SortDirection);
+        }
+        else
+        {
+            _itemProducts = await MarketService.GetProductsByAvatarAsync(Planet, Skip, Take, SubType, SortBy, SortDirection, AvatarAddress);
+        }
     }
 
     private string? GetItemName(ProductItem productItem)

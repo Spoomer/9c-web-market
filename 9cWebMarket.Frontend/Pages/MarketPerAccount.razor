@@ -6,6 +6,7 @@
 @inject NavigationManager NavigationManager
 @inject IApiClient ApiClient
 @inject NineCapiService MarketService
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 
 <div class="container" style="scroll-behavior: smooth">
     <div class="input-group mb-3" style="min-width: 200px; height: 25%">
@@ -35,7 +36,8 @@
     private IReadOnlyCollection<string> _planets = [];
     private bool _loading;
     private string _avatarAddress = "";
-    
+    private const string AvatarAdressKey = "AvatarAdress";
+
     public override async Task SetParametersAsync(ParameterView parameters)
     {
         parameters.SetParameterProperties(this);
@@ -55,6 +57,11 @@
         _planets = _planets.Where(x => x != "thor").ToArray();
         
         SetSelectedPlanetFromUrl();
+
+        if (await LocalStorage.ContainKeyAsync(AvatarAdressKey))
+        {
+            _avatarAddress = await LocalStorage.GetItemAsStringAsync(AvatarAdressKey) ?? string.Empty;
+        }
     }
     
     private bool SetSelectedPlanetFromUrl()
@@ -94,6 +101,10 @@
     private async Task OnAvatarAddressChange(ChangeEventArgs arg)
     {
         _avatarAddress = arg.Value?.ToString() ?? "";
+        if (!string.IsNullOrWhiteSpace(_avatarAddress))
+        {
+            await LocalStorage.SetItemAsStringAsync(AvatarAdressKey, _avatarAddress);
+        }
         _loading = true;
     }
 

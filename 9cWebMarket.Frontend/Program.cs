@@ -22,6 +22,7 @@ builder.Services.AddSingleton<IMimirClient, MimirClient>();
 builder.Services.AddSingleton<IMarketService, MimirService>();
 builder.Services.AddSingleton<NineCapiClient>();
 builder.Services.AddSingleton<NineCapiService>();
+builder.Services.AddSingleton<IMarketService, NineCapiService>(x=> x.GetRequiredService<NineCapiService>());
 
 builder.Services.AddTransient<BrowserService>();
 builder.Services.AddBlazoredLocalStorage();

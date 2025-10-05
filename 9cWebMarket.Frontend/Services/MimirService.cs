@@ -13,8 +13,11 @@ public class MimirService : IMarketService
     {
         _mimirClient = mimirClient;
     }
+
+    public string Name => "Mimir";
+
     public async Task<IReadOnlyList<ProductItem>> GetItemProductsAsync(string planet, int skip, int take, ItemSubType itemSubType,
-        ProductSortBy sortBy, SortDirection sortDirection, string avatarAddress = "")
+        ProductSortBy sortBy, SortDirection sortDirection)
     {
         var itemProductRequest = new GraphQLRequest
         {
@@ -40,7 +43,13 @@ public class MimirService : IMarketService
             return [];
         }
     }
-    
+
+    public Task<IReadOnlyList<ProductItem>> GetProductsByAvatarAsync(string planet, int skip, int take, ItemSubType itemSubType, ProductSortBy sortBy,
+        SortDirection sortDirection = SortDirection.ASCENDING, string avatarAddress = "")
+    {
+        throw new NotImplementedException();
+    }
+
     // take is not a graphql variable because of fieldCosts....
     private static string GetItemProductQuery(int take) =>
         $$"""

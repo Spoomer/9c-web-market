@@ -14,7 +14,7 @@
         <select class="form-select" id="planet-select" @onchange="OnPlanetSelectChange">
             @foreach (var planet in _planets)
             {
-                <option value="@planet" selected="@(planet == _selectedPlanet)">@planet</option>
+                <option value="@planet" selected="@(planet == _selectedPlanet)">@planet.Capitalize()</option>
             }
         </select>
     </div>

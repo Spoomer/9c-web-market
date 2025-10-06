@@ -27,7 +27,7 @@
             }
             @if (!string.IsNullOrEmpty(ItemPictureProperties.ItemIdOptions) && ItemPictureProperties.ItemType == 2)
             {
-                <div class="item-option item-option-@(ItemPictureProperties.StatModels.Count + ItemPictureProperties.SkillModels.Count - 1)">
+                <div class="item-option item-option-@(ItemPictureProperties.StatModels.Count(x=>x.Additional) + ItemPictureProperties.SkillModels.Count)">
                     <img src="@(HostEnvironment.BaseAddress)icons/UI_icon_option_stat.png"/>
                     @if (int.Parse(ItemPictureProperties.ItemIdOptions.Split('_')[1].Split('+')[0]) >= 2)
                     {

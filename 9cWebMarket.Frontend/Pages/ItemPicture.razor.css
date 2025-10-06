@@ -45,6 +45,10 @@
     background: url('icons/item_bg_6.png');
     background-size: contain;
 }
+.item-bg-7 {
+    background: url('icons/item_bg_7.png');
+    background-size: contain;
+}
 .item-level {
     position: absolute;
     font-family: "Roboto", sans-serif;

@@ -166,6 +166,10 @@ main[b-8pla3h1stl] {
     background: url('icons/item_bg_6.png');
     background-size: contain;
 }
+.item-bg-7[b-nausa8do1p] {
+    background: url('icons/item_bg_7.png');
+    background-size: contain;
+}
 .item-level[b-nausa8do1p] {
     position: absolute;
     font-family: "Roboto", sans-serif;

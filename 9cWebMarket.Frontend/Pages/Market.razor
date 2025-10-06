@@ -28,7 +28,7 @@
             }
         </select>
     </div>
-    <h3>@SelectedPlanet.Capitalize() Market from @SelectedMarketService.Capitalize()</h3>
+    <h3>@SelectedPlanet.Capitalize() Market from @SelectedMarketService</h3>
     <div id="header" class="d-flex justify-content-evenly">
 
         <div id="categories" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
@@ -82,15 +82,34 @@
     private IReadOnlyCollection<string> _planets = [];
     private bool _loading;
     private Dictionary<string, IMarketService> _marketServices = new();
+    private string _selectedPlanet = DefaultPlanet;
+    private string _selectedMarketService = DefaultMarketService;
     private const string PlanetQueryKey = "planet";
     private const string MarketServiceQueryKey = "marketService";
     private const string DefaultPlanet = "heimdall";
     private const string DefaultMarketService = "9CAPI";
+
     [SupplyParameterFromQuery(Name = PlanetQueryKey)]
-    public string SelectedPlanet { get; set; } = DefaultPlanet;
+    public string SelectedPlanet
+    {
+        get => _selectedPlanet;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value)) return;
+            _selectedPlanet = value;
+        }
+    }
 
     [SupplyParameterFromQuery(Name = MarketServiceQueryKey)]
-    public string SelectedMarketService { get; set; } = DefaultMarketService;
+    public string SelectedMarketService
+    {
+        get => _selectedMarketService;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value)) return;
+            _selectedMarketService = value;
+        }
+    }
 
     public override async Task SetParametersAsync(ParameterView parameters)
     {
@@ -110,14 +129,7 @@
         //no thor support
         _planets = _planets.Where(x => x != "thor").ToArray();
         _marketServices = MarketServices.ToDictionary(x => x.Name);
-        
-        ValidateQuery();
-    }
 
-    private void ValidateQuery()
-    {
-        if (string.IsNullOrWhiteSpace(SelectedPlanet) || !_planets.Contains(SelectedPlanet)) SelectedPlanet = DefaultPlanet;
-        if (string.IsNullOrWhiteSpace(SelectedMarketService) ||!_marketServices.ContainsKey(SelectedMarketService)) SelectedMarketService = DefaultMarketService;
     }
 
     private bool SetPlanet(string planet)
@@ -127,7 +139,7 @@
         SelectedPlanet = planet;
         return true;
     }
-    
+
     private void OnEndpointSelectChange(ChangeEventArgs e)
     {
         if (e.Value is string serviceName)
@@ -150,10 +162,10 @@
         query ??= new Dictionary<string, StringValues>();
         query[PlanetQueryKey] = SelectedPlanet;
         query[MarketServiceQueryKey] = SelectedMarketService;
-        uriBuilder.Query = string.Empty; 
+        uriBuilder.Query = string.Empty;
 
         var newUrl = QueryHelpers.AddQueryString(uriBuilder.Uri.AbsoluteUri, query);
-        
+
         NavigationManager.NavigateTo(newUrl);
     }
 
@@ -163,7 +175,7 @@
         SelectedMarketService = service;
         return true;
     }
-    
+
     private void OnPlanetSelectChange(ChangeEventArgs e)
     {
         if (e.Value is string planet)
@@ -171,7 +183,7 @@
             ChangePlanet(planet);
         }
     }
-    
+
     private void ChangePlanet(string planet)
     {
         SetPlanet(planet);
@@ -197,6 +209,7 @@
             _sortBy = productSortBy;
             _sortDirection = SortDirection.DESCENDING;
         }
+
         _loading = true;
         NavigationManager.NavigateTo(NavigationManager.Uri);
     }

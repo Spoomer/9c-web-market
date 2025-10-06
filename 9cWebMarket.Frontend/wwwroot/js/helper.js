@@ -9,7 +9,7 @@ window.helper = {
             setTimeout(function () {
                 if (window.CountResize > 0) {
                     window.CountResize = 0;
-                    dotnetHelper.invokeMethodAsync('OnResize', window.innerWidth, window.innerHeight);
+                    // dotnetHelper.invokeMethodAsync('OnResize', window.innerWidth, window.innerHeight);
                 }
             }, 500)
             window.CountResize += 1

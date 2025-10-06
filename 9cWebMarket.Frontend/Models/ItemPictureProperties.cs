@@ -12,6 +12,6 @@ public class ItemPictureProperties
     public string? ItemIdOptions { get; set;}
     public int? ItemType { get; set;}
     public IReadOnlyList<SkillModel> SkillModels { get; set; } = [];
-
     public IReadOnlyList<StatModel> StatModels { get; set; } = [];
+    public int OptionCount { get; set; }
 }

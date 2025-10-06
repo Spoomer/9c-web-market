@@ -76,7 +76,7 @@
 <MarketList Planet="@SelectedPlanet" SubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection" @bind-Loading="@_loading"
             MarketService="_marketServices[SelectedMarketService]"/>
 @code {
-    private ItemSubType _subtype = ItemSubType.Armor;
+    private ItemSubType _subtype = ItemSubType.Weapon;
     private ProductSortBy _sortBy = ProductSortBy.CP;
     private SortDirection _sortDirection = SortDirection.DESCENDING;
     private IReadOnlyCollection<string> _planets = [];

@@ -15,7 +15,7 @@ public static class ItemPicturePropertiesMapper
 {
     public static ItemPictureProperties ToItemPictureProperties(this MarketTransaction marketTransaction)
     {
-        return new ItemPictureProperties
+        var itemPictureProperties = new ItemPictureProperties
         {
             Ticker = marketTransaction.Ticker,
             ItemId = marketTransaction.ItemId,
@@ -25,8 +25,11 @@ public static class ItemPicturePropertiesMapper
             ItemIdOptions = marketTransaction.ItemIdOptions,
             ItemType = marketTransaction.TradeItem.ItemType,
             SkillModels = marketTransaction.TradeItem.SkillModels ?? [],
-            StatModels = marketTransaction.TradeItem.StatModels ?? []
+            StatModels = marketTransaction.TradeItem.StatModels ?? [],
         };
+        itemPictureProperties.OptionCount = itemPictureProperties.StatModels.Count(x => x.Additional);
+        
+        return itemPictureProperties;
     }
 
     // public static ItemPictureProperties? ToItemPictureProperties(this Product productItem)
@@ -52,7 +55,8 @@ public static class ItemPicturePropertiesMapper
             ItemIdOptions = $"{equipment.Id}_{equipment.StatsMap.Value.Count}+{equipment.Skills.Count}",
             ItemType = (int) equipment.ItemType,
             SkillModels = equipment.Skills.ToSkillModels(),
-            StatModels = equipment.StatsMap.ToStatModels()
+            StatModels = equipment.StatsMap.ToStatModels(),
+            OptionCount = equipment.OptionCountFromCombination - equipment.Skills.Count
         };
     }
     // public static ItemPictureProperties ToItemPictureProperties(this IWeapon weapon)

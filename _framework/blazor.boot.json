@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "9cWebMarket.Frontend",
   "resources": {
-    "hash": "sha256-TVJELAMb6k0MpL4CP5uLEeJByS2lBv60B9yNF2w84Gg=",
+    "hash": "sha256-TIj8X7lksBTxjXwAOYptWkMAu5zASE5XaVK2Ig/iu3M=",
     "fingerprinting": {
       "Bencodex.n7i3v0d4iw.wasm": "Bencodex.wasm",
       "Bencodex.Json.0nbeswxk3j.wasm": "Bencodex.Json.wasm",
@@ -130,7 +130,7 @@
       "System.m0fu6d0eya.wasm": "System.wasm",
       "netstandard.0mzva6pq5f.wasm": "netstandard.wasm",
       "System.Private.CoreLib.bowvpqwsp9.wasm": "System.Private.CoreLib.wasm",
-      "9cWebMarket.Frontend.2mt4zwijea.wasm": "9cWebMarket.Frontend.wasm",
+      "9cWebMarket.Frontend.7771bf8ruh.wasm": "9cWebMarket.Frontend.wasm",
       "dotnet.native.m3etafduos.js": "dotnet.native.js",
       "dotnet.native.8gbjv2nfuh.wasm": "dotnet.native.wasm",
       "dotnet.js": "dotnet.js",
@@ -283,7 +283,7 @@
       "System.Web.HttpUtility.h1htfqt019.wasm": "sha256-heJjIS0TxXlTOzoQF5/OcGGEsa8zaQLoOJWyssZdj1U=",
       "System.m0fu6d0eya.wasm": "sha256-hkGLo/MuT/FJ0Xf4XUL0D2VA4dZV532GHNB1JicxLko=",
       "netstandard.0mzva6pq5f.wasm": "sha256-+Ac9f9CVSsjNQTacIPmYss6ac7O4CVsWS8jxSnc/Wlc=",
-      "9cWebMarket.Frontend.2mt4zwijea.wasm": "sha256-6tG8k6+jCsFCUyZJvSZH921CWAvhdFP9Df1J93mI618="
+      "9cWebMarket.Frontend.7771bf8ruh.wasm": "sha256-TV7qMpaTznKwrTONFnjDX8CoPWccR3TiWTqef3yrxcQ="
     }
   },
   "cacheBootResources": true,

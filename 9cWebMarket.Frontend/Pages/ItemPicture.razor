@@ -27,17 +27,17 @@
             }
             @if (!string.IsNullOrEmpty(ItemPictureProperties.ItemIdOptions) && ItemPictureProperties.ItemType == 2)
             {
-                <div class="item-option item-option-@(ItemPictureProperties.StatModels.Count + ItemPictureProperties.SkillModels.Count - 1)">
+                <div class="item-option item-option-@(ItemPictureProperties.OptionCount +1)">
                     <img src="@(HostEnvironment.BaseAddress)icons/UI_icon_option_stat.png"/>
-                    @if (int.Parse(ItemPictureProperties.ItemIdOptions.Split('_')[1].Split('+')[0]) >= 2)
+                    @if (ItemPictureProperties.OptionCount >= 2)
                     {
                         <img src="@(HostEnvironment.BaseAddress)icons/UI_icon_option_stat.png"/>
                     }
-                    @if (int.Parse(ItemPictureProperties.ItemIdOptions.Split('_')[1].Split('+')[0]) >= 3)
+                    @if (ItemPictureProperties.OptionCount >= 3)
                     {
                         <img src="@(HostEnvironment.BaseAddress)icons/UI_icon_option_stat.png"/>
                     }
-                    @if (int.Parse(ItemPictureProperties.ItemIdOptions.Split('_')[1].Split('+')[1]) > 0)
+                    @if (ItemPictureProperties.SkillModels.Count > 0)
                     {
                         <img src="@(HostEnvironment.BaseAddress)icons/UI_icon_option_skill.png"/>
                     }

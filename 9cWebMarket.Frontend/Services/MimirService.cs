@@ -5,7 +5,7 @@ using NineCWebMarket.Frontend.Models.Mimir;
 
 namespace NineCWebMarket.Frontend.Services;
 
-public class MimirService : IMimirService
+public class MimirService : IMarketService
 {
     private readonly IMimirClient _mimirClient;
 
@@ -13,11 +13,15 @@ public class MimirService : IMimirService
     {
         _mimirClient = mimirClient;
     }
-    public async Task<IReadOnlyList<ProductItem>> GetItemProductsAsync(string planet, int skip, ItemSubType itemSubType, ProductSortBy sortBy, SortDirection sortDirection)
+
+    public string Name => "Mimir";
+
+    public async Task<IReadOnlyList<ProductItem>> GetItemProductsAsync(string planet, int skip, int take, ItemSubType itemSubType,
+        ProductSortBy sortBy, SortDirection sortDirection)
     {
         var itemProductRequest = new GraphQLRequest
         {
-            Query = GetItemProductQuery,
+            Query = GetItemProductQuery(take),
             OperationName = "GetItemProducts",
             Variables = new
             {
@@ -28,16 +32,29 @@ public class MimirService : IMimirService
             }
         };
         var client = _mimirClient.GetClient(planet);
-
-        var graphQlResponse = await client.SendQueryAsync<GetItemProductsResponse>(itemProductRequest);
-
-        return graphQlResponse?.Data?.Products?.Items ?? Array.Empty<ProductItem>();
+        try
+        {
+            var graphQlResponse = await client.SendQueryAsync<GetItemProductsResponse>(itemProductRequest);
+            return graphQlResponse.Data?.Products?.Items ?? [];
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return [];
+        }
     }
-    
-    private const string GetItemProductQuery =
-        """
+
+    public Task<IReadOnlyList<ProductItem>> GetProductsByAvatarAsync(string planet, int skip, int take, ItemSubType itemSubType, ProductSortBy sortBy,
+        SortDirection sortDirection = SortDirection.ASCENDING, string avatarAddress = "")
+    {
+        throw new NotImplementedException();
+    }
+
+    // take is not a graphql variable because of fieldCosts....
+    private static string GetItemProductQuery(int take) =>
+        $$"""
         query GetItemProducts( $skip : Int $itemSubType: ItemSubType, $sortBy : ProductSortBy , $sortDirection: SortDirection ) {
-            products(skip: $skip, take: 12, filter: { itemSubType: $itemSubType, 
+            products(skip: $skip, take: {{take}}, filter: { itemSubType: $itemSubType, 
                 itemType: EQUIPMENT productType: NON_FUNGIBLE
                 sortBy: $sortBy sortDirection: $sortDirection
             }) {

@@ -37,29 +37,55 @@ public class ItemNameService : IItemNameService
 
             var httpClient = _httpClientFactory.CreateClient();
             httpClient.BaseAddress = new Uri(_configuration.GetValue<string>("BasePath")!);
-            var response = await httpClient.GetAsync(_endpoints.Value.ItemName);
-            if (!response.IsSuccessStatusCode)
-            {
-                return;
-            }
+            
+            await AddItemNames(httpClient, itemNames);
+            
+            await AddItemNamesFromEquipmentItem(httpClient, itemNames);
 
-            var stream = await response.Content.ReadAsStreamAsync();
-            using var reader = new StreamReader(stream);
-
-            using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-            var records = csv.GetRecords<ItemName>();
-            foreach (var record in records)
-            {
-                if (int.TryParse(record.Key[10..], CultureInfo.InvariantCulture, out var key))
-                {
-                    itemNames.TryAdd(key, record.English);
-                }
-            }
             _itemNames = itemNames.ToFrozenDictionary();
         }
         finally
         {
             _semaphore.Release();
+        }
+    }
+
+    private async Task AddItemNamesFromEquipmentItem(HttpClient httpClient, Dictionary<int, string> itemNames)
+    {
+        var response = await httpClient.GetAsync(_endpoints.Value.EquipmentItem);
+        if (!response.IsSuccessStatusCode)
+        {
+            return;
+        }
+        var stream = await response.Content.ReadAsStreamAsync();
+        using var reader = new StreamReader(stream);
+
+        using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+        var records = csv.GetRecords<EquipmentItem>();
+        foreach (var record in records)
+        {
+            itemNames.TryAdd(record.Id, record.Name);
+        }
+    }
+
+    private async Task AddItemNames(HttpClient httpClient, Dictionary<int, string> itemNames)
+    {
+        var response = await httpClient.GetAsync(_endpoints.Value.ItemName);
+        if (!response.IsSuccessStatusCode)
+        {
+            return;
+        }
+        var stream = await response.Content.ReadAsStreamAsync();
+        using var reader = new StreamReader(stream);
+
+        using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+        var records = csv.GetRecords<ItemName>();
+        foreach (var record in records)
+        {
+            if (int.TryParse(record.Key[10..], CultureInfo.InvariantCulture, out var key))
+            {
+                itemNames.TryAdd(key, record.English);
+            }
         }
     }
 

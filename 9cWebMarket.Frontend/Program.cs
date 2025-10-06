@@ -19,7 +19,10 @@ builder.Services.AddSingleton<IItemNameService, ItemNameService>();
 builder.Services.AddSingleton<ITickerNameService, TickerNameService>();
 builder.Services.AddSingleton<IApiClient, ApiClient>();
 builder.Services.AddSingleton<IMimirClient, MimirClient>();
-builder.Services.AddSingleton<IMimirService, MimirService>();
+builder.Services.AddSingleton<IMarketService, MimirService>();
+builder.Services.AddSingleton<NineCapiClient>();
+builder.Services.AddSingleton<NineCapiService>();
+builder.Services.AddSingleton<IMarketService, NineCapiService>(x=> x.GetRequiredService<NineCapiService>());
 
 builder.Services.AddTransient<BrowserService>();
 builder.Services.AddBlazoredLocalStorage();

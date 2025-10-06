@@ -1,37 +1,41 @@
 @page "/Market"
 @using GraphQL.Client.Abstractions.Utilities
-@using Microsoft.AspNetCore.Components.WebAssembly.Hosting
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Primitives
 @using Nekoyume.Model.Item
 @using NineCWebMarket.Frontend.Api
-@using NineCWebMarket.Frontend.Models.Extensions
-@using NineCWebMarket.Frontend.Models.Mimir
 @using NineCWebMarket.Frontend.Services
-@using NineCWebMarket.Frontend.Services.Interfaces
-@inject IItemNameService ItemNameService
-@inject IWebAssemblyHostEnvironment HostEnvironment
-@inject IJSRuntime JsRuntime
 @inject NavigationManager NavigationManager
-@inject IMimirService MimirService
 @inject IApiClient ApiClient
+@inject IEnumerable<IMarketService> MarketServices
 
 <div class="container" style="scroll-behavior: smooth">
+    <div class="input-group mb-3" style="min-width: 200px; height: 25%">
+        <label class="input-group-text" for="planet-select">MarketService</label>
+        <select class="form-select" id="endpoint-select" @onchange="OnEndpointSelectChange">
+            @foreach (var service in _marketServices.Keys)
+            {
+                <option value="@service" selected="@(service == SelectedMarketService)">@service</option>
+            }
+        </select>
+    </div>
     <div class="input-group mb-3" style="min-width: 200px; height: 25%">
         <label class="input-group-text" for="planet-select">Planet</label>
         <select class="form-select" id="planet-select" @onchange="OnPlanetSelectChange">
             @foreach (var planet in _planets)
             {
-                <option value="@planet" selected="@(planet == _selectedPlanet)">@planet</option>
+                <option value="@planet" selected="@(planet == SelectedPlanet)">@planet.Capitalize()</option>
             }
         </select>
     </div>
-    <h3>@_selectedPlanet.Capitalize() Market</h3>
+    <h3>@SelectedPlanet.Capitalize() Market from @SelectedMarketService.Capitalize()</h3>
     <div id="header" class="d-flex justify-content-evenly">
 
         <div id="categories" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
             <h4>Category</h4>
             @for (int i = 6; i <= 10; i++)
             {
-                var itemSubType = (ItemSubType)i;
+                var itemSubType = (ItemSubType) i;
                 var buttonColor = itemSubType == _subtype ? "btn-primary" : "btn-secondary";
                 <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(itemSubType)">@itemSubType</button>
             }
@@ -67,156 +71,32 @@
             }
         </div>
     </div>
-    <div id="list" class="mt-4">
-        @if ((int)_subtype >= 6 && (int)_subtype <= 10)
-        {
-            if (_loading)
-            {
-                <LoadingEntries/>
-            }
-            else
-            {
-                
-                        @if (_itemProducts is not null)
-                        {
-                            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2 ">
-                                @foreach (var item in _itemProducts)
-                                {
 
-                                    <div class="col d-flex mb-2 border border-1 rounded">
-                                        <ItemPicture
-                                            ItemPictureProperties="@item.Object.Equipment.ToItemPictureProperties()"
-                                            Class="me-3"></ItemPicture>
-                                        <div class="d-flex flex-column flex-grow-1">
-                                            <div class="d-flex mb-2">
-                                                <span class="me-3 fw-bold">@GetItemName(item)</span>
-                                                <PriceDisplayWithUnitPrice Price="item.Object.Price.Quantity.ToInt()"
-                                                                           UnitPrice="item.UnitPrice ?? 0M" Class="me-3"/>
-                                            </div>
-                                            <div id="product-information-@item.Object.ProductId" class="row row-cols-2 justify-content-between">
-                                                <div name="combatPoints" class="col">
-                                                    <span class="text-nowrap">@(item.CombatPoint?.ToString() ?? "?") CP</span>
-                                                    @if (item is { CombatPoint: > 0 })
-                                                    {
-                                                        <div>(~@(item.CombatPoint / item.Object.Price.Quantity.ToInt(1)) CP/
-                                                            <img
-                                                                alt="Gold"
-                                                                src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png"
-                                                                style="width: 16px;"/>)
-                                                        </div>
-                                                    }
-                                                </div>
-                                                <div name="crystals" class="col flex-grow-1">
-                                                    <span class="text-nowrap">
-                                                        @(item.Crystal?.ToString() ?? "?")
-                                                        <img alt="Crystal"
-                                                             src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png"
-                                                             style="width: 16px;"/>
-                                                    </span>
-                                                    @if (item is { Crystal: > 0 })
-                                                    {
-                                                        <div>(@item.CrystalPerPrice
-                                                            <img alt="Crystal"
-                                                                 src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png"
-                                                                 style="width: 16px;"/>/
-                                                            <img
-                                                                alt="NCG"
-                                                                src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png"
-                                                                style="width: 16px;"/>)
-                                                        </div>
-                                                    }
-                                                </div>
-
-                                                @if (!string.IsNullOrEmpty(item.Object.SellerAgentAddress))
-                                                {
-                                                    <div name="seller" class="text-nowrap">
-                                                        <b>Seller:</b> @(item.Object.SellerAgentAddress[..8])
-                                                    </div>
-                                                }
-                                            </div>
-                                            <div class="accordion accordion-flush" >
-                                                <div class="accordion-item">
-                                                    <h2 class="accordion-header">
-                                                        <button class="accordion-button btn-sm collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@item.Object.ProductId" aria-expanded="false" aria-controls="collapse-@item.Object.ProductId">
-                                                            Details
-                                                        </button>
-                                                    </h2>
-
-                                                    <div class="collapse" id="collapse-@item.Object.ProductId">
-                                                        <div>
-                                                            <ItemDetails Item="item"/>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                }
-
-                            </div>
-                        }
-            }
-        }
-        else
-        {
-            <p>This item type isn't implemented yet..</p>
-        }
-        <div id="pager-bottom" class="d-flex justify-content-between sticky-bottom bg-body">
-            <button class="btn btn-primary @DisabledClass" @onclick="OnClickBack">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                     class="bi bi-arrow-left" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd"
-                          d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/>
-                </svg>
-            </button>
-            <div class="align-content-center">
-                Page @(_currentPageIndex + 1)
-            </div>
-            <button class="btn btn-primary" @onclick="OnClickNext">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                     class="bi bi-arrow-right" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd"
-                          d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/>
-                </svg>
-            </button>
-        </div>
-    </div>
 </div>
-
+<MarketList Planet="@SelectedPlanet" SubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection" @bind-Loading="@_loading"
+            MarketService="_marketServices[SelectedMarketService]"/>
 @code {
-    private ItemSubType _subtype = ItemSubType.Armor;
-    private const int Take = 12;
-    private int _currentPageIndex = 0;
-    private int Skip => Take * _currentPageIndex;
+    private ItemSubType _subtype = ItemSubType.Weapon;
     private ProductSortBy _sortBy = ProductSortBy.CP;
     private SortDirection _sortDirection = SortDirection.DESCENDING;
-    private IReadOnlyList<ProductItem>? _itemProducts;
-    private bool _loading = false;
-    private string DisabledClass => _currentPageIndex == 0 ? "disabled" : "";
-    private string _selectedPlanet = "heimdall";
     private IReadOnlyCollection<string> _planets = [];
-    
+    private bool _loading;
+    private Dictionary<string, IMarketService> _marketServices = new();
+    private const string PlanetQueryKey = "planet";
+    private const string MarketServiceQueryKey = "marketService";
+    private const string DefaultPlanet = "heimdall";
+    private const string DefaultMarketService = "9CAPI";
+    [SupplyParameterFromQuery(Name = PlanetQueryKey)]
+    public string SelectedPlanet { get; set; } = DefaultPlanet;
+
+    [SupplyParameterFromQuery(Name = MarketServiceQueryKey)]
+    public string SelectedMarketService { get; set; } = DefaultMarketService;
+
     public override async Task SetParametersAsync(ParameterView parameters)
     {
         parameters.SetParameterProperties(this);
         await InitAsync();
         await base.SetParametersAsync(ParameterView.Empty);
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await JsRuntime.InvokeVoidAsync("window.helper.withContext.registerViewportChangeCallback", DotNetObjectReference.Create(this));
-        }
-        
-        if (_loading)
-        {
-            _loading = false;
-            _itemProducts = await MimirService.GetItemProductsAsync(_selectedPlanet, Skip, _subtype, _sortBy, _sortDirection);
-
-            StateHasChanged();
-        }
     }
 
     private async Task InitAsync()
@@ -229,29 +109,58 @@
         _planets = await ApiClient.GetPlanetsNamesAsync();
         //no thor support
         _planets = _planets.Where(x => x != "thor").ToArray();
+        _marketServices = MarketServices.ToDictionary(x => x.Name);
         
-        SetSelectedPlanetFromUrl();
-        
-        await ItemNameService.InitAsync();
-        _itemProducts = await MimirService.GetItemProductsAsync(_selectedPlanet, Skip, _subtype, _sortBy, _sortDirection);
+        ValidateQuery();
     }
-    
-    private bool SetSelectedPlanetFromUrl()
+
+    private void ValidateQuery()
     {
-        var uri = new Uri(NavigationManager.Uri, UriKind.Absolute);
-
-        if (!uri.Fragment.StartsWith('#')) return false;
-
-        var planetFromFragment = uri.Fragment[1..];
-
-        return SetPlanet(planetFromFragment);
+        if (string.IsNullOrWhiteSpace(SelectedPlanet) || !_planets.Contains(SelectedPlanet)) SelectedPlanet = DefaultPlanet;
+        if (string.IsNullOrWhiteSpace(SelectedMarketService) ||!_marketServices.ContainsKey(SelectedMarketService)) SelectedMarketService = DefaultMarketService;
     }
-    
+
     private bool SetPlanet(string planet)
     {
         if (!_planets.Contains(planet)) return false;
 
-        _selectedPlanet = planet;
+        SelectedPlanet = planet;
+        return true;
+    }
+    
+    private void OnEndpointSelectChange(ChangeEventArgs e)
+    {
+        if (e.Value is string serviceName)
+        {
+            ChangeMarketService(serviceName);
+        }
+    }
+
+    private void ChangeMarketService(string service)
+    {
+        SetMarketService(service);
+        _loading = true;
+        NavigateToNewUrl();
+    }
+
+    private void NavigateToNewUrl()
+    {
+        var uriBuilder = new UriBuilder(NavigationManager.Uri);
+        var query = QueryHelpers.ParseNullableQuery(uriBuilder.Query);
+        query ??= new Dictionary<string, StringValues>();
+        query[PlanetQueryKey] = SelectedPlanet;
+        query[MarketServiceQueryKey] = SelectedMarketService;
+        uriBuilder.Query = string.Empty; 
+
+        var newUrl = QueryHelpers.AddQueryString(uriBuilder.Uri.AbsoluteUri, query);
+        
+        NavigationManager.NavigateTo(newUrl);
+    }
+
+    private bool SetMarketService(string service)
+    {
+        if (!_marketServices.ContainsKey(service)) return false;
+        SelectedMarketService = service;
         return true;
     }
     
@@ -267,12 +176,7 @@
     {
         SetPlanet(planet);
         _loading = true;
-        NavigationManager.NavigateTo(NavigationManager.Uri+$"#{planet}");
-    }
-    
-    private string? GetItemName(ProductItem productItem)
-    {
-        return ItemNameService.GetValueOrDefault(productItem.Object.Equipment.Id);
+        NavigateToNewUrl();
     }
 
     private void Refresh(ItemSubType itemSubType)
@@ -293,21 +197,6 @@
             _sortBy = productSortBy;
             _sortDirection = SortDirection.DESCENDING;
         }
-        _loading = true;
-        NavigationManager.NavigateTo(NavigationManager.Uri);
-    }
-
-    private void OnClickNext()
-    {
-        _currentPageIndex++;
-        
-        _loading = true;
-        NavigationManager.NavigateTo(NavigationManager.Uri);
-    }
-
-    private void OnClickBack()
-    {
-        _currentPageIndex--;
         _loading = true;
         NavigationManager.NavigateTo(NavigationManager.Uri);
     }

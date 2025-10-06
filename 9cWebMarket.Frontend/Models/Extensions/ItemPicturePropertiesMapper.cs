@@ -1,6 +1,13 @@
-﻿using NineCWebMarket.Frontend.Models.Api;
+﻿using System.Text.Json;
+using Nekoyume.Model.Elemental;
+using Nekoyume.Model.Item;
+using Nekoyume.Model.Skill;
+using Nekoyume.Model.Stat;
+using Nekoyume.TableData;
+using NineCWebMarket.Frontend.Models.Api;
 using NineCWebMarket.Frontend.Models.Mimir;
-using NineCWebMarket.Frontend.Models.Mimir.Stats;
+using Skill = NineCWebMarket.Frontend.Models.Mimir.Skill;
+using StatMap = NineCWebMarket.Frontend.Models.Mimir.Stats.StatMap;
 
 namespace NineCWebMarket.Frontend.Models.Extensions;
 
@@ -8,7 +15,7 @@ public static class ItemPicturePropertiesMapper
 {
     public static ItemPictureProperties ToItemPictureProperties(this MarketTransaction marketTransaction)
     {
-        return new ItemPictureProperties
+        var itemPictureProperties = new ItemPictureProperties
         {
             Ticker = marketTransaction.Ticker,
             ItemId = marketTransaction.ItemId,
@@ -18,8 +25,11 @@ public static class ItemPicturePropertiesMapper
             ItemIdOptions = marketTransaction.ItemIdOptions,
             ItemType = marketTransaction.TradeItem.ItemType,
             SkillModels = marketTransaction.TradeItem.SkillModels ?? [],
-            StatModels = marketTransaction.TradeItem.StatModels ?? []
+            StatModels = marketTransaction.TradeItem.StatModels ?? [],
         };
+        itemPictureProperties.OptionCount = itemPictureProperties.StatModels.Count(x => x.Additional);
+        
+        return itemPictureProperties;
     }
 
     // public static ItemPictureProperties? ToItemPictureProperties(this Product productItem)
@@ -43,9 +53,10 @@ public static class ItemPicturePropertiesMapper
             Level = equipment.Level,
             Quantity = 1,
             ItemIdOptions = $"{equipment.Id}_{equipment.StatsMap.Value.Count}+{equipment.Skills.Count}",
-            ItemType = (int)equipment.ItemType,
+            ItemType = (int) equipment.ItemType,
             SkillModels = equipment.Skills.ToSkillModels(),
-            StatModels = equipment.StatsMap.ToStatModels()
+            StatModels = equipment.StatsMap.ToStatModels(),
+            OptionCount = equipment.OptionCountFromCombination - equipment.Skills.Count
         };
     }
     // public static ItemPictureProperties ToItemPictureProperties(this IWeapon weapon)
@@ -123,27 +134,111 @@ public static class ItemPicturePropertiesMapper
     //     };
     // }
 
-    private static List<StatModel> ToStatModels(this StatMap statsMap)
+    public static List<StatModel> ToStatModels(this StatMap statsMap)
     {
         List<StatModel> stats = [];
         foreach (var stat in statsMap.Value)
         {
-            stats.Add(new StatModel((int)stat.Value.StatType, stat.Value.BaseValue, false));
-            stats.Add(new StatModel((int)stat.Value.StatType, stat.Value.AdditionalValue, true));
+            stats.Add(new StatModel((int) stat.Value.StatType, stat.Value.BaseValue, false));
+            stats.Add(new StatModel((int) stat.Value.StatType, stat.Value.AdditionalValue, true));
         }
-        
+
         return stats;
     }
 
-    private static List<SkillModel> ToSkillModels(this IReadOnlyList<Skill> skillsMap)
+    public static StatMap ToStatMap(this IEnumerable<StatModel> statsModels)
+    {
+        var statsMap = new StatMap();
+        foreach (var stat in statsModels.GroupBy(x => x.Type))
+        {
+            decimal baseValue = 0;
+            decimal additionalValue = 0;
+            foreach (var statModel in stat)
+            {
+                if (statModel.Additional)
+                {
+                    additionalValue = statModel.Value;
+                }
+                else
+                {
+                    baseValue = statModel.Value;
+                }
+            }
+
+            var statType = (StatType) stat.Key;
+            statsMap.Value[statType] = new NineCWebMarket.Frontend.Models.Mimir.Stats.DecimalStat
+            {
+                StatType = statType,
+                BaseValue = baseValue,
+                AdditionalValue = additionalValue
+            };
+        }
+
+        return statsMap;
+    }
+
+    public static List<SkillModel> ToSkillModels(this IEnumerable<Skill> skillsMap)
     {
         List<SkillModel> skills = [];
         foreach (var skill in skillsMap)
         {
-            skills.Add(new SkillModel(skill.SkillRow.Id, skill.StatPowerRatio, skill.SkillRow.HitCount, skill.Chance, (int)skill.SkillRow.ElementalType,
-                (int)skill.ReferencedStatType, skill.SkillRow.Cooldown, skill.Power, (int)skill.SkillRow.SkillCategory));
+            skills.Add(new SkillModel(skill.SkillRow.Id, skill.StatPowerRatio, skill.SkillRow.HitCount, skill.Chance,
+                (int) skill.SkillRow.ElementalType,
+                (int) skill.ReferencedStatType, skill.SkillRow.Cooldown, skill.Power,
+                (int) skill.SkillRow.SkillCategory));
         }
 
         return skills;
+    }
+
+    public static List<Skill> ToSkills(this IEnumerable<SkillModel> skillsModels)
+    {
+        List<Skill> skills = [];
+        foreach (var skillModel in skillsModels)
+        {
+            var row = new Row
+            {
+                Id = skillModel.SkillId,
+                ElementalType = (ElementalType) skillModel.ElementalType,
+                SkillCategory = (SkillCategory) skillModel.SkillCategory,
+                SkillTargetType = SkillTargetType.Enemy,
+                HitCount = skillModel.HitCount,
+                Cooldown = skillModel.Cooldown,
+                Combo = false
+            };
+            skills.Add(new Skill
+            {
+                SkillRow = JsonSerializer.Deserialize<SkillSheet.Row>(JsonSerializer.Serialize(row)),
+                Power = skillModel.Power,
+                Chance = skillModel.Chance,
+                StatPowerRatio = skillModel.StatPowerRatio,
+                ReferencedStatType = (StatType) skillModel.ReferencedStatType
+            });
+        }
+
+        return skills;
+    }
+
+    public static List<ProductItem> ToProductItems(this IEnumerable<TradeItem> responseItemProducts)
+    {
+        var result = new List<ProductItem>();
+        foreach (var item in responseItemProducts)
+        {
+            var equipment = new Equipment((ElementalType) item.ElementalType, item.Grade ?? 0, item.ItemId ?? 0,
+                (ItemSubType) (item.ItemSubType ?? 0), (ItemType) (item.ItemType ?? 0),
+                false, 0, item.ItemId?.ToString() ?? "", item.Level ?? 0, false,
+                item.OptionCountFromCombination ?? 0, item.RegisteredBlockIndex, item.SetId ?? 0,
+                string.Empty, item.SkillModels?.ToSkills() ?? [], item.StatModels?.ToStatMap() ?? new StatMap());
+            
+            var product = new Product(item.Quantity, item.ProductId, "NON_FUNGIBLE",
+                item.RegisteredBlockIndex, item.SellerAgentAddress, item.SellerAvatarAddress, equipment,
+                new Price(0, item.Price.ToString(), item.Price.ToString(), "NCG"));
+            
+            var productItem = new ProductItem(item.SellerAvatarAddress, item.CombatPoint, item.Crystal,
+                item.CrystalPerPrice, "", (int) item.UnitPrice, product);
+            result.Add(productItem);
+        }
+
+        return result;
     }
 }

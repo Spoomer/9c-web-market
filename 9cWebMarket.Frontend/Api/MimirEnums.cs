@@ -1,3 +1,4 @@
+// ReSharper disable InconsistentNaming
 namespace NineCWebMarket.Frontend.Api;
 
 public enum ProductSortBy

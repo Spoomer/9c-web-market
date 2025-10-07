@@ -17,7 +17,7 @@ public class MimirService : IMarketService
     public string Name => "Mimir";
 
     public async Task<IReadOnlyList<ProductItem>> GetItemProductsAsync(string planet, int skip, int take, ItemSubType itemSubType,
-        ProductSortBy sortBy, SortDirection sortDirection)
+        ProductSortBy sortBy, SortDirection sortDirection, IEnumerable<int>? itemIds = null)
     {
         var itemProductRequest = new GraphQLRequest
         {
@@ -45,7 +45,8 @@ public class MimirService : IMarketService
     }
 
     public Task<IReadOnlyList<ProductItem>> GetProductsByAvatarAsync(string planet, int skip, int take, ItemSubType itemSubType, ProductSortBy sortBy,
-        SortDirection sortDirection = SortDirection.ASCENDING, string avatarAddress = "")
+        SortDirection sortDirection = SortDirection.ASCENDING, string avatarAddress = "",
+        IEnumerable<int>? itemIds = null)
     {
         throw new NotImplementedException();
     }

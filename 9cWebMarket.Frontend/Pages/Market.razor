@@ -10,72 +10,87 @@
 @inject IEnumerable<IMarketService> MarketServices
 
 <div class="container" style="scroll-behavior: smooth">
-    <div class="input-group mb-3" style="min-width: 200px; height: 25%">
-        <label class="input-group-text" for="planet-select">MarketService</label>
-        <select class="form-select" id="endpoint-select" @onchange="OnEndpointSelectChange">
-            @foreach (var service in _marketServices.Keys)
-            {
-                <option value="@service" selected="@(service == SelectedMarketService)">@service</option>
-            }
-        </select>
-    </div>
-    <div class="input-group mb-3" style="min-width: 200px; height: 25%">
-        <label class="input-group-text" for="planet-select">Planet</label>
-        <select class="form-select" id="planet-select" @onchange="OnPlanetSelectChange">
-            @foreach (var planet in _planets)
-            {
-                <option value="@planet" selected="@(planet == SelectedPlanet)">@planet.Capitalize()</option>
-            }
-        </select>
+    <div class="d-flex justify-content-evenly flex-wrap flex-lg-nowrap">
+        <div class="input-group mb-3" style="min-width: 200px; height: 25%">
+            <label class="input-group-text" for="planet-select">MarketService</label>
+            <select class="form-select" id="endpoint-select" @onchange="OnEndpointSelectChange">
+                @foreach (var service in _marketServices.Keys)
+                {
+                    <option value="@service" selected="@(service == SelectedMarketService)">@service</option>
+                }
+            </select>
+        </div>
+        <div class="input-group mb-3" style="min-width: 200px; height: 25%">
+            <label class="input-group-text" for="planet-select">Planet</label>
+            <select class="form-select" id="planet-select" @onchange="OnPlanetSelectChange">
+                @foreach (var planet in _planets)
+                {
+                    <option value="@planet" selected="@(planet == SelectedPlanet)">@planet.Capitalize()</option>
+                }
+            </select>
+        </div>
     </div>
     <h3>@SelectedPlanet.Capitalize() Market from @SelectedMarketService</h3>
-    <div id="header" class="d-flex justify-content-evenly">
-
-        <div id="categories" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
-            <h4>Category</h4>
-            @for (int i = 6; i <= 10; i++)
-            {
-                var itemSubType = (ItemSubType) i;
-                var buttonColor = itemSubType == _subtype ? "btn-primary" : "btn-secondary";
-                <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(itemSubType)">@itemSubType</button>
-            }
+    <div id="header" class="row row-cols-2 row-cols-md-3 g-2 gx-1">
+        <div id="categories" class="w-50 h-auto mb-1">
+            <div class="mt-1 pt-3 pb-2 container bg-body-secondary rounded-2">
+                <h4>Category</h4>
+                @for (int i = 6; i <= 10; i++)
+                {
+                    var itemSubType = (ItemSubType) i;
+                    var buttonColor = itemSubType == _subtype ? "btn-primary" : "btn-secondary";
+                    <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(itemSubType)">@itemSubType</button>
+                }
+            </div>
         </div>
-        <div id="sorting" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
-            <h4>Sorting</h4>
-            @foreach (var productSortBy in Enum.GetValues<ProductSortBy>())
-            {
-                var buttonColor = productSortBy == _sortBy ? "btn-primary" : "btn-secondary";
+        <div id="sorting" class="w-50">
+            <div class="mt-1 pt-3 pb-1 container bg-body-secondary rounded-2">
+                <h4>Sorting</h4>
+                @foreach (var productSortBy in Enum.GetValues<ProductSortBy>())
+                {
+                    var buttonColor = productSortBy == _sortBy ? "btn-primary" : "btn-secondary";
 
-                <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(productSortBy)">
-                    @productSortBy
-                    @if (_sortBy == productSortBy)
-                    {
-                        @if (_sortDirection == SortDirection.ASCENDING)
+                    <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(productSortBy)">
+                        @productSortBy
+                        @if (_sortBy == productSortBy)
                         {
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                 class="bi bi-caret-up-fill" viewBox="0 0 16 16">
-                                <path
-                                    d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
-                            </svg>
+                            @if (_sortDirection == SortDirection.ASCENDING)
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                     class="bi bi-caret-up-fill" viewBox="0 0 16 16">
+                                    <path
+                                        d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
+                                </svg>
+                            }
+                            else
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                     class="bi bi-caret-down-fill" viewBox="0 0 16 16">
+                                    <path
+                                        d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                                </svg>
+                            }
                         }
-                        else
-                        {
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                 class="bi bi-caret-down-fill" viewBox="0 0 16 16">
-                                <path
-                                    d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
-                            </svg>
-                        }
-                    }
-                </button>
-            }
+                    </button>
+                }
+            </div>
+
+        </div>
+        <div id="search" class="mt-1 pt-3 pb-2 container bg-body-secondary rounded-2 flex-grow-1">
+            <h4>Search</h4>
+            <input type="text" class="form-control" placeholder="min. 3 characters" @onchange="OnSearchInputChange">
         </div>
     </div>
 
 </div>
-<MarketList Planet="@SelectedPlanet" SubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection" @bind-Loading="@_loading"
+<MarketList Planet="@SelectedPlanet" Search="@_currentSearch" SubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection" @bind-Loading="@_loading"
             MarketService="_marketServices[SelectedMarketService]"/>
 @code {
+    private const string PlanetQueryKey = "planet";
+    private const string MarketServiceQueryKey = "marketService";
+    private const string DefaultPlanet = "heimdall";
+    private const string DefaultMarketService = "9CAPI";
+    
     private ItemSubType _subtype = ItemSubType.Weapon;
     private ProductSortBy _sortBy = ProductSortBy.CP;
     private SortDirection _sortDirection = SortDirection.DESCENDING;
@@ -84,11 +99,8 @@
     private Dictionary<string, IMarketService> _marketServices = new();
     private string _selectedPlanet = DefaultPlanet;
     private string _selectedMarketService = DefaultMarketService;
-    private const string PlanetQueryKey = "planet";
-    private const string MarketServiceQueryKey = "marketService";
-    private const string DefaultPlanet = "heimdall";
-    private const string DefaultMarketService = "9CAPI";
-
+    private string _currentSearch = string.Empty;
+    
     [SupplyParameterFromQuery(Name = PlanetQueryKey)]
     public string SelectedPlanet
     {
@@ -129,7 +141,7 @@
         //no thor support
         _planets = _planets.Where(x => x != "thor").ToArray();
         _marketServices = MarketServices.ToDictionary(x => x.Name);
-
+        _loading = true;
     }
 
     private bool SetPlanet(string planet)
@@ -209,6 +221,16 @@
             _sortBy = productSortBy;
             _sortDirection = SortDirection.DESCENDING;
         }
+
+        _loading = true;
+        NavigationManager.NavigateTo(NavigationManager.Uri);
+    }
+
+    private void OnSearchInputChange(ChangeEventArgs e)
+    {
+        if (e.Value is not string input) return;
+        
+        _currentSearch = input;
 
         _loading = true;
         NavigationManager.NavigateTo(NavigationManager.Uri);

@@ -20,9 +20,35 @@ public class NineCapiService : IMarketService
     {
         _client = client;
     }
+    
+    public async Task<IReadOnlyList<ProductItem>> GetItemProductsAsync(string planet, int skip, int take,
+        ItemSubType itemSubType, ProductSortBy sortBy, SortDirection sortDirection, IEnumerable<int>? itemIds = null)
+    {
+        var httpClient = _client.GetClient(planet);
+        var deserializeOptions = new JsonSerializerOptions(JsonSerializerOptions.Default);
+        deserializeOptions.Converters.Add(new StatMapJsonConverter(deserializeOptions));
+        deserializeOptions.Converters.Add(new JsonStringEnumConverter());
 
+        var requestUri = $"Market/products/items/{(int)itemSubType}?limit={take}&offset={skip}&order={
+            NineCapiEnums.FromMimirEnums(sortBy,sortDirection)}&isCustom=false";
+        if (itemIds != null)
+        {
+            foreach (var itemId in itemIds)
+            {
+                requestUri += $"&itemIds={itemId}";
+            }
+        }
+        var response = await httpClient.GetFromJsonAsync<NineCapiMarketProviderResponse>(
+            requestUri,
+            deserializeOptions
+        ) ?? NineCapiMarketProviderResponse.Empty;
+
+        return response.ItemProducts.ToProductItems();
+    }
+    
     public async Task<IReadOnlyList<ProductItem>> GetProductsByAvatarAsync(string planet, int skip, int take,
-        ItemSubType itemSubType, ProductSortBy sortBy, SortDirection sortDirection, string avatarAddress)
+        ItemSubType itemSubType, ProductSortBy sortBy, SortDirection sortDirection, string avatarAddress,
+        IEnumerable<int>? itemIds = null)
     {
         if (string.IsNullOrEmpty(avatarAddress))
         {
@@ -34,29 +60,22 @@ public class NineCapiService : IMarketService
         deserializeOptions.Converters.Add(new StatMapJsonConverter(deserializeOptions));
         deserializeOptions.Converters.Add(new JsonStringEnumConverter());
 
+        var requestUri = $"Market/products/{avatarAddress}?offset={skip}&limit={take}&isCustom=false";
+        if (itemIds != null)
+        {
+            foreach (var itemId in itemIds)
+            {
+                requestUri += $"&itemIds={itemId}";
+            }
+        }
+        
         var response = await httpClient.GetFromJsonAsync<NineCapiMarketProviderResponse>(
-            $"Market/products/{avatarAddress}?offset={skip}&limit={take}",
+            requestUri,
             deserializeOptions
         ) ?? NineCapiMarketProviderResponse.Empty;
 
         return response.ItemProducts.ToProductItems();
     }
-    
-    public async Task<IReadOnlyList<ProductItem>> GetItemProductsAsync(string planet, int skip, int take,
-        ItemSubType itemSubType, ProductSortBy sortBy, SortDirection sortDirection)
-    {
-        var httpClient = _client.GetClient(planet);
-        var deserializeOptions = new JsonSerializerOptions(JsonSerializerOptions.Default);
-        deserializeOptions.Converters.Add(new StatMapJsonConverter(deserializeOptions));
-        deserializeOptions.Converters.Add(new JsonStringEnumConverter());
 
-        var response = await httpClient.GetFromJsonAsync<NineCapiMarketProviderResponse>(
-            $"Market/products/items/{(int)itemSubType}?limit={take}&offset={skip}&order={
-                NineCapiEnums.FromMimirEnums(sortBy,sortDirection)}&isCustom=false",
-            deserializeOptions
-        ) ?? NineCapiMarketProviderResponse.Empty;
-
-        return response.ItemProducts.ToProductItems();
-    }
     
 }

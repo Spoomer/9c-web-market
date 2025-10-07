@@ -10,8 +10,9 @@ public interface IMarketService
     public string Name { get;}
     
     Task<IReadOnlyList<ProductItem>> GetItemProductsAsync(string planet, int skip, int take, ItemSubType itemSubType,
-        ProductSortBy sortBy, SortDirection sortDirection = SortDirection.ASCENDING);
+        ProductSortBy sortBy, SortDirection sortDirection = SortDirection.ASCENDING, IEnumerable<int>? itemIds = null);
     
     Task<IReadOnlyList<ProductItem>> GetProductsByAvatarAsync(string planet, int skip, int take, ItemSubType itemSubType,
-        ProductSortBy sortBy, SortDirection sortDirection = SortDirection.ASCENDING, string avatarAddress = "");
+        ProductSortBy sortBy, SortDirection sortDirection = SortDirection.ASCENDING, string avatarAddress = "",
+        IEnumerable<int>? itemIds = null);
 }

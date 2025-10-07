@@ -137,9 +137,12 @@
     [Parameter] public bool Loading { get; set; }
     [Parameter] public EventCallback<bool> LoadingChanged { get; set; }
     [Parameter] public IMarketService? MarketService { get; set; }
+    [Parameter] public string? Search { get; set; }
+
     private const int Take = 12;
     private int _currentPageIndex;
     private int Skip => Take * _currentPageIndex;
+    private IEnumerable<int>? _itemIds = [];
     private IReadOnlyList<ProductItem>? _itemProducts;
     private string DisabledClass => _currentPageIndex == 0 ? "disabled" : "";
 
@@ -156,22 +159,18 @@
         {
             await JsRuntime.InvokeVoidAsync("window.helper.withContext.registerViewportChangeCallback", DotNetObjectReference.Create(this));
         }
-
-        if (Loading && MarketService is not null)
+        
+        if(!Loading || MarketService is null) return;
+        
+        if (AvatarAddress is null)
         {
-            await UpdateLoadingState(false);
-            if (AvatarAddress is null)
-            {
-                _itemProducts = await MarketService.GetItemProductsAsync(Planet, Skip, Take, SubType, SortBy, SortDirection);
-
-            }
-            else
-            {
-                _itemProducts = await MarketService.GetProductsByAvatarAsync(Planet, Skip, Take, SubType, SortBy, SortDirection, AvatarAddress);
-            }
-
-            StateHasChanged();
+            _itemProducts = await MarketService.GetItemProductsAsync(Planet, Skip, Take, SubType, SortBy, SortDirection, _itemIds);
         }
+        else
+        {
+            _itemProducts = await MarketService.GetProductsByAvatarAsync(Planet, Skip, Take, SubType, SortBy, SortDirection, AvatarAddress, _itemIds);
+        }
+        await UpdateLoadingState(false);
     }
 
     private async Task UpdateLoadingState(bool state)
@@ -183,15 +182,17 @@
     private async Task InitAsync()
     {
         await ItemNameService.InitAsync();
-        if(MarketService is null) return;
-        if (AvatarAddress is null)
+
+        if (string.IsNullOrWhiteSpace(Search) || Search.Length < 3)
         {
-            _itemProducts = await MarketService.GetItemProductsAsync(Planet, Skip, Take, SubType, SortBy, SortDirection);
+            _itemIds = null;
+            return;
         }
-        else
-        {
-            _itemProducts = await MarketService.GetProductsByAvatarAsync(Planet, Skip, Take, SubType, SortBy, SortDirection, AvatarAddress);
-        }
+        
+        _itemIds = ItemNameService
+            .Where(x => x.Value.Contains(Search, StringComparison.OrdinalIgnoreCase))
+            .Select(x=>x.Key)
+            .ToArray();
     }
 
     private string? GetItemName(ProductItem productItem)

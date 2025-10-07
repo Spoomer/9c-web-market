@@ -31,9 +31,9 @@
         </div>
     </div>
     <h3>@SelectedPlanet.Capitalize() Market from @SelectedMarketService</h3>
-    <div id="header" class="row row-cols-2 row-cols-md-3 g-2 gx-1">
+    <div id="header" class="row row-cols-2 row-cols-md-3 g-1 gx-1">
         <div id="categories" class="w-50 h-auto mb-1">
-            <div class="mt-1 pt-3 pb-2 container bg-body-secondary rounded-2">
+            <div class="mt-1 pt-3 pb-2 container bg-body-secondary rounded-2 h-100">
                 <h4>Category</h4>
                 @for (int i = 6; i <= 10; i++)
                 {
@@ -44,14 +44,14 @@
             </div>
         </div>
         <div id="sorting" class="w-50">
-            <div class="mt-1 pt-3 pb-1 container bg-body-secondary rounded-2">
+            <div class="mt-1 pt-3 pb-2 container bg-body-secondary rounded-2">
                 <h4>Sorting</h4>
                 @foreach (var productSortBy in Enum.GetValues<ProductSortBy>())
                 {
                     var buttonColor = productSortBy == _sortBy ? "btn-primary" : "btn-secondary";
 
                     <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(productSortBy)">
-                        @productSortBy
+                        @productSortBy.ToString().Replace('_', ' ').Capitalize()
                         @if (_sortBy == productSortBy)
                         {
                             @if (_sortDirection == SortDirection.ASCENDING)
@@ -74,7 +74,6 @@
                     </button>
                 }
             </div>
-
         </div>
         <div id="search" class="mt-1 pt-3 pb-2 container bg-body-secondary rounded-2 flex-grow-1">
             <h4>Search</h4>

@@ -3,17 +3,13 @@ name: build and test and deploy
 on:
   push:
     branches:
-      - main
-  pull_request:
-    types: [closed]
-    branches:
-      - main    
+      - main   
 permissions:
   contents: write
   
 jobs:
   deploy-to-github-pages:
-    if: github.event.pull_request.merged == true
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       # Checkout the code

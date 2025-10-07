@@ -45,7 +45,8 @@ public class MimirService : IMarketService
     }
 
     public Task<IReadOnlyList<ProductItem>> GetProductsByAvatarAsync(string planet, int skip, int take, ItemSubType itemSubType, ProductSortBy sortBy,
-        SortDirection sortDirection = SortDirection.ASCENDING, string avatarAddress = "")
+        SortDirection sortDirection = SortDirection.ASCENDING, string avatarAddress = "",
+        IEnumerable<int>? itemIds = null)
     {
         throw new NotImplementedException();
     }

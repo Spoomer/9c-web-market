@@ -142,7 +142,7 @@
     private const int Take = 12;
     private int _currentPageIndex;
     private int Skip => Take * _currentPageIndex;
-    private IEnumerable<int> _itemIds = [];
+    private IEnumerable<int>? _itemIds = [];
     private IReadOnlyList<ProductItem>? _itemProducts;
     private string DisabledClass => _currentPageIndex == 0 ? "disabled" : "";
 
@@ -168,7 +168,7 @@
         }
         else
         {
-            _itemProducts = await MarketService.GetProductsByAvatarAsync(Planet, Skip, Take, SubType, SortBy, SortDirection, AvatarAddress);
+            _itemProducts = await MarketService.GetProductsByAvatarAsync(Planet, Skip, Take, SubType, SortBy, SortDirection, AvatarAddress, _itemIds);
         }
         await UpdateLoadingState(false);
     }
@@ -182,8 +182,12 @@
     private async Task InitAsync()
     {
         await ItemNameService.InitAsync();
-        
-        if(string.IsNullOrWhiteSpace(Search) || Search.Length < 3) return;
+
+        if (string.IsNullOrWhiteSpace(Search) || Search.Length < 3)
+        {
+            _itemIds = null;
+            return;
+        }
         
         _itemIds = ItemNameService
             .Where(x => x.Value.Contains(Search, StringComparison.OrdinalIgnoreCase))

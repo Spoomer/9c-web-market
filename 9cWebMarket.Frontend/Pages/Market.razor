@@ -31,49 +31,54 @@
         </div>
     </div>
     <h3>@SelectedPlanet.Capitalize() Market from @SelectedMarketService</h3>
-    <div id="header" class="d-flex justify-content-evenly">
-        <div id="search" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
+    <div id="header" class="row row-cols-2 row-cols-md-3 g-2 gx-1">
+        <div id="categories" class="w-50 h-auto mb-1">
+            <div class="mt-1 pt-3 pb-2 container bg-body-secondary rounded-2">
+                <h4>Category</h4>
+                @for (int i = 6; i <= 10; i++)
+                {
+                    var itemSubType = (ItemSubType) i;
+                    var buttonColor = itemSubType == _subtype ? "btn-primary" : "btn-secondary";
+                    <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(itemSubType)">@itemSubType</button>
+                }
+            </div>
+        </div>
+        <div id="sorting" class="w-50">
+            <div class="mt-1 pt-3 pb-1 container bg-body-secondary rounded-2">
+                <h4>Sorting</h4>
+                @foreach (var productSortBy in Enum.GetValues<ProductSortBy>())
+                {
+                    var buttonColor = productSortBy == _sortBy ? "btn-primary" : "btn-secondary";
+
+                    <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(productSortBy)">
+                        @productSortBy
+                        @if (_sortBy == productSortBy)
+                        {
+                            @if (_sortDirection == SortDirection.ASCENDING)
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                     class="bi bi-caret-up-fill" viewBox="0 0 16 16">
+                                    <path
+                                        d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
+                                </svg>
+                            }
+                            else
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                     class="bi bi-caret-down-fill" viewBox="0 0 16 16">
+                                    <path
+                                        d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+                                </svg>
+                            }
+                        }
+                    </button>
+                }
+            </div>
+
+        </div>
+        <div id="search" class="mt-1 pt-3 pb-2 container bg-body-secondary rounded-2 flex-grow-1">
             <h4>Search</h4>
             <input type="text" class="form-control" placeholder="min. 3 characters" @onchange="OnSearchInputChange">
-        </div>
-        <div id="categories" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
-            <h4>Category</h4>
-            @for (int i = 6; i <= 10; i++)
-            {
-                var itemSubType = (ItemSubType) i;
-                var buttonColor = itemSubType == _subtype ? "btn-primary" : "btn-secondary";
-                <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(itemSubType)">@itemSubType</button>
-            }
-        </div>
-        <div id="sorting" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
-            <h4>Sorting</h4>
-            @foreach (var productSortBy in Enum.GetValues<ProductSortBy>())
-            {
-                var buttonColor = productSortBy == _sortBy ? "btn-primary" : "btn-secondary";
-
-                <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(productSortBy)">
-                    @productSortBy
-                    @if (_sortBy == productSortBy)
-                    {
-                        @if (_sortDirection == SortDirection.ASCENDING)
-                        {
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                 class="bi bi-caret-up-fill" viewBox="0 0 16 16">
-                                <path
-                                    d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
-                            </svg>
-                        }
-                        else
-                        {
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                 class="bi bi-caret-down-fill" viewBox="0 0 16 16">
-                                <path
-                                    d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
-                            </svg>
-                        }
-                    }
-                </button>
-            }
         </div>
     </div>
 

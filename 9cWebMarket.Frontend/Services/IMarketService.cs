@@ -13,5 +13,6 @@ public interface IMarketService
         ProductSortBy sortBy, SortDirection sortDirection = SortDirection.ASCENDING, IEnumerable<int>? itemIds = null);
     
     Task<IReadOnlyList<ProductItem>> GetProductsByAvatarAsync(string planet, int skip, int take, ItemSubType itemSubType,
-        ProductSortBy sortBy, SortDirection sortDirection = SortDirection.ASCENDING, string avatarAddress = "");
+        ProductSortBy sortBy, SortDirection sortDirection = SortDirection.ASCENDING, string avatarAddress = "",
+        IEnumerable<int>? itemIds = null);
 }

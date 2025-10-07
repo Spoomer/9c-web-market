@@ -47,7 +47,8 @@ public class NineCapiService : IMarketService
     }
     
     public async Task<IReadOnlyList<ProductItem>> GetProductsByAvatarAsync(string planet, int skip, int take,
-        ItemSubType itemSubType, ProductSortBy sortBy, SortDirection sortDirection, string avatarAddress)
+        ItemSubType itemSubType, ProductSortBy sortBy, SortDirection sortDirection, string avatarAddress,
+        IEnumerable<int>? itemIds = null)
     {
         if (string.IsNullOrEmpty(avatarAddress))
         {
@@ -59,8 +60,17 @@ public class NineCapiService : IMarketService
         deserializeOptions.Converters.Add(new StatMapJsonConverter(deserializeOptions));
         deserializeOptions.Converters.Add(new JsonStringEnumConverter());
 
+        var requestUri = $"Market/products/{avatarAddress}?offset={skip}&limit={take}&isCustom=false";
+        if (itemIds != null)
+        {
+            foreach (var itemId in itemIds)
+            {
+                requestUri += $"&itemIds={itemId}";
+            }
+        }
+        
         var response = await httpClient.GetFromJsonAsync<NineCapiMarketProviderResponse>(
-            $"Market/products/{avatarAddress}?offset={skip}&limit={take}",
+            requestUri,
             deserializeOptions
         ) ?? NineCapiMarketProviderResponse.Empty;
 

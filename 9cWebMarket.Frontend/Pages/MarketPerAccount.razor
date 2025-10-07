@@ -20,13 +20,17 @@
     </div>
     <h3>@_selectedPlanet.Capitalize() Market</h3>
     <div id="header" class="d-flex justify-content-evenly">
-        <div class="form-floating mb-3 w-100">
+        <div id="avatar-address" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
+            <h4>Avatar Address</h4>
             <input value="@_avatarAddress" @onchange="OnAvatarAddressChange" type="text" class="form-control" id="floatingInput" placeholder="0x..">
-            <label for="floatingInput">Avatar Address</label>
+        </div>
+        <div id="search" class="pt-3 pb-2 container bg-body-secondary rounded-2 flex-grow-1">
+            <h4>Search</h4>
+            <input type="text" class="form-control" placeholder="min. 3 characters" @onchange="OnSearchInputChange">
         </div>
     </div>
 </div>
-<MarketList Planet="@_selectedPlanet" SubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection" @bind-Loading="@_loading" MarketService="MarketService"
+<MarketList Planet="@_selectedPlanet" Search="@_currentSearch" SubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection" @bind-Loading="@_loading" MarketService="MarketService"
             AvatarAddress="@_avatarAddress"/>
 @code {
     private ItemSubType _subtype = ItemSubType.Armor;
@@ -37,6 +41,7 @@
     private bool _loading;
     private string _avatarAddress = "";
     private const string AvatarAdressKey = "AvatarAdress";
+    private string _currentSearch = string.Empty;
 
     public override async Task SetParametersAsync(ParameterView parameters)
     {
@@ -108,5 +113,14 @@
         }
         _loading = true;
     }
+    
+    private void OnSearchInputChange(ChangeEventArgs e)
+    {
+        if (e.Value is not string input) return;
+        
+        _currentSearch = input;
 
+        _loading = true;
+        NavigationManager.NavigateTo(NavigationManager.Uri);
+    }
 }

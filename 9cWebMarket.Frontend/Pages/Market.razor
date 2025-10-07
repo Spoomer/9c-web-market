@@ -10,27 +10,32 @@
 @inject IEnumerable<IMarketService> MarketServices
 
 <div class="container" style="scroll-behavior: smooth">
-    <div class="input-group mb-3" style="min-width: 200px; height: 25%">
-        <label class="input-group-text" for="planet-select">MarketService</label>
-        <select class="form-select" id="endpoint-select" @onchange="OnEndpointSelectChange">
-            @foreach (var service in _marketServices.Keys)
-            {
-                <option value="@service" selected="@(service == SelectedMarketService)">@service</option>
-            }
-        </select>
-    </div>
-    <div class="input-group mb-3" style="min-width: 200px; height: 25%">
-        <label class="input-group-text" for="planet-select">Planet</label>
-        <select class="form-select" id="planet-select" @onchange="OnPlanetSelectChange">
-            @foreach (var planet in _planets)
-            {
-                <option value="@planet" selected="@(planet == SelectedPlanet)">@planet.Capitalize()</option>
-            }
-        </select>
+    <div class="d-flex justify-content-evenly flex-wrap flex-lg-nowrap">
+        <div class="input-group mb-3" style="min-width: 200px; height: 25%">
+            <label class="input-group-text" for="planet-select">MarketService</label>
+            <select class="form-select" id="endpoint-select" @onchange="OnEndpointSelectChange">
+                @foreach (var service in _marketServices.Keys)
+                {
+                    <option value="@service" selected="@(service == SelectedMarketService)">@service</option>
+                }
+            </select>
+        </div>
+        <div class="input-group mb-3" style="min-width: 200px; height: 25%">
+            <label class="input-group-text" for="planet-select">Planet</label>
+            <select class="form-select" id="planet-select" @onchange="OnPlanetSelectChange">
+                @foreach (var planet in _planets)
+                {
+                    <option value="@planet" selected="@(planet == SelectedPlanet)">@planet.Capitalize()</option>
+                }
+            </select>
+        </div>
     </div>
     <h3>@SelectedPlanet.Capitalize() Market from @SelectedMarketService</h3>
     <div id="header" class="d-flex justify-content-evenly">
-
+        <div id="search" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
+            <h4>Search</h4>
+            <input type="text" class="form-control" placeholder="min. 3 characters" @onchange="OnSearchInputChange">
+        </div>
         <div id="categories" class="pt-3 pb-2 container bg-body-secondary me-2 rounded-2 flex-grow-1">
             <h4>Category</h4>
             @for (int i = 6; i <= 10; i++)
@@ -73,9 +78,14 @@
     </div>
 
 </div>
-<MarketList Planet="@SelectedPlanet" SubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection" @bind-Loading="@_loading"
+<MarketList Planet="@SelectedPlanet" Search="@_currentSearch" SubType="_subtype" SortBy="_sortBy" SortDirection="_sortDirection" @bind-Loading="@_loading"
             MarketService="_marketServices[SelectedMarketService]"/>
 @code {
+    private const string PlanetQueryKey = "planet";
+    private const string MarketServiceQueryKey = "marketService";
+    private const string DefaultPlanet = "heimdall";
+    private const string DefaultMarketService = "9CAPI";
+    
     private ItemSubType _subtype = ItemSubType.Weapon;
     private ProductSortBy _sortBy = ProductSortBy.CP;
     private SortDirection _sortDirection = SortDirection.DESCENDING;
@@ -84,11 +94,8 @@
     private Dictionary<string, IMarketService> _marketServices = new();
     private string _selectedPlanet = DefaultPlanet;
     private string _selectedMarketService = DefaultMarketService;
-    private const string PlanetQueryKey = "planet";
-    private const string MarketServiceQueryKey = "marketService";
-    private const string DefaultPlanet = "heimdall";
-    private const string DefaultMarketService = "9CAPI";
-
+    private string _currentSearch = string.Empty;
+    
     [SupplyParameterFromQuery(Name = PlanetQueryKey)]
     public string SelectedPlanet
     {
@@ -129,7 +136,7 @@
         //no thor support
         _planets = _planets.Where(x => x != "thor").ToArray();
         _marketServices = MarketServices.ToDictionary(x => x.Name);
-
+        _loading = true;
     }
 
     private bool SetPlanet(string planet)
@@ -209,6 +216,16 @@
             _sortBy = productSortBy;
             _sortDirection = SortDirection.DESCENDING;
         }
+
+        _loading = true;
+        NavigationManager.NavigateTo(NavigationManager.Uri);
+    }
+
+    private void OnSearchInputChange(ChangeEventArgs e)
+    {
+        if (e.Value is not string input) return;
+        
+        _currentSearch = input;
 
         _loading = true;
         NavigationManager.NavigateTo(NavigationManager.Uri);

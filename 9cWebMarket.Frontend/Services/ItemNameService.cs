@@ -38,8 +38,8 @@ public class ItemNameService : IItemNameService
             var httpClient = _httpClientFactory.CreateClient();
             httpClient.BaseAddress = new Uri(_configuration.GetValue<string>("BasePath")!);
             
+            await AddItemNamesFromRemoteCsv(httpClient, itemNames);
             await AddItemNames(httpClient, itemNames);
-            
             await AddItemNamesFromEquipmentItem(httpClient, itemNames);
 
             _itemNames = itemNames.ToFrozenDictionary();
@@ -47,6 +47,32 @@ public class ItemNameService : IItemNameService
         finally
         {
             _semaphore.Release();
+        }
+    }
+
+    private async Task AddItemNamesFromRemoteCsv(HttpClient httpClient, Dictionary<int, string> itemNames)
+    {
+        var response = await httpClient.GetAsync(_endpoints.Value.RemoteCsv);
+        if (!response.IsSuccessStatusCode)
+        {
+            return;
+        }
+        var stream = await response.Content.ReadAsStreamAsync();
+        using var reader = new StreamReader(stream);
+
+        using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+        var records = csv.GetRecords<ItemName>();
+        foreach (var record in records)
+        {
+            if (!record.Key.StartsWith("ITEM_NAME_") && !record.Key.StartsWith("ITEM_NAME_CUSTOM_"))
+            {
+                continue;
+            }
+            
+            if (int.TryParse(record.Key.Split('_')[^1], CultureInfo.InvariantCulture, out var key))
+            {
+                itemNames.TryAdd(key, record.English);
+            }
         }
     }
 

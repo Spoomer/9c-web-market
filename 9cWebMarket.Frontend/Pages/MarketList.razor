@@ -11,7 +11,7 @@
 @inject NavigationManager NavigationManager
 
 <div id="list" class="mt-4">
-    @if ((int) SubType >= 6 && (int) SubType <= 10)
+    @if (!SubTypesBlacklist.Contains(SubType))
     {
         if (Loading)
         {
@@ -36,39 +36,56 @@
                                 </div>
                                 <div id="product-information-@item.Object.ProductId"
                                      class="row row-cols-2 justify-content-between">
-                                    <div name="combatPoints" class="col">
-                                        <span class="text-nowrap">@(item.CombatPoint?.ToString() ?? "?") CP</span>
-                                        @if (item is {CombatPoint: > 0})
-                                        {
-                                            <div>(~@(item.CombatPoint / item.Object.Price.Quantity.ToInt(1)) CP/
+                                    @if (SubTypesFungibles.Contains(item.Object.Equipment.ItemSubType))
+                                    {
+                                        <div name="fungibles" class="col">
+                                            <span class="text-nowrap">
+                                                @item.Object.ItemCount x
+                                            </span>
+                                            <div>(~@(Math.Round(item.Object.Price.Quantity.ToInt(1) / (decimal)item.Object.ItemCount, 6)) 
                                                 <img
                                                     alt="Gold"
                                                     src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png"
-                                                    style="width: 16px;"/>)
+                                                    style="width: 16px;"/> / per item)
                                             </div>
-                                        }
-                                    </div>
-                                    <div name="crystals" class="col flex-grow-1">
-                                                    <span class="text-nowrap">
-                                                        @(item.Crystal?.ToString() ?? "?")
-                                                        <img alt="Crystal"
-                                                             src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png"
-                                                             style="width: 16px;"/>
-                                                    </span>
-                                        @if (item is {Crystal: > 0})
-                                        {
-                                            <div>(@item.CrystalPerPrice
+                                        </div>
+                                    }
+                                    else
+                                    { 
+                                        <div name="combatPoints" class="col">
+                                            <span class="text-nowrap">@(item.CombatPoint?.ToString() ?? "?") CP</span>
+                                            @if (item is {CombatPoint: > 0})
+                                            {
+                                                <div>(~@(item.CombatPoint / item.Object.Price.Quantity.ToInt(1)) CP/
+                                                    <img
+                                                        alt="Gold"
+                                                        src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png"
+                                                        style="width: 16px;"/>)
+                                                </div>
+                                            }
+                                        </div>
+                                        <div name="crystals" class="col flex-grow-1">
+                                            <span class="text-nowrap">
+                                                @(item.Crystal?.ToString() ?? "?")
                                                 <img alt="Crystal"
                                                      src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png"
-                                                     style="width: 16px;"/>/
-                                                <img
-                                                    alt="NCG"
-                                                    src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png"
-                                                    style="width: 16px;"/>)
-                                            </div>
-                                        }
-                                    </div>
-
+                                                     style="width: 16px;"/>
+                                            </span>
+                                            @if (item is {Crystal: > 0})
+                                            {
+                                                <div>(@item.CrystalPerPrice
+                                                    <img alt="Crystal"
+                                                         src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/CRYSTAL.png"
+                                                         style="width: 16px;"/>/
+                                                    <img
+                                                        alt="NCG"
+                                                        src="@(HostEnvironment.BaseAddress)icons/FungibleAssetValue/NCG.png"
+                                                        style="width: 16px;"/>)
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    
                                     @if (!string.IsNullOrEmpty(item.Object.SellerAgentAddress))
                                     {
                                         <div name="seller" class="text-nowrap">
@@ -76,25 +93,29 @@
                                         </div>
                                     }
                                 </div>
-                                <div class="accordion accordion-flush">
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header">
-                                            <button class="accordion-button btn-sm collapsed" type="button"
-                                                    data-bs-toggle="collapse"
-                                                    data-bs-target="#collapse-@item.Object.ProductId"
-                                                    aria-expanded="false"
-                                                    aria-controls="collapse-@item.Object.ProductId">
-                                                Details
-                                            </button>
-                                        </h2>
+                                @if (!SubTypesFungibles.Contains(item.Object.Equipment.ItemSubType))
+                                {
+                                    <div class="accordion accordion-flush">
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button btn-sm collapsed" type="button"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target="#collapse-@item.Object.ProductId"
+                                                        aria-expanded="false"
+                                                        aria-controls="collapse-@item.Object.ProductId">
+                                                    Details
+                                                </button>
+                                            </h2>
 
-                                        <div class="collapse" id="collapse-@item.Object.ProductId">
-                                            <div>
-                                                <ItemDetails Item="item"/>
+                                            <div class="collapse" id="collapse-@item.Object.ProductId">
+                                                <div>
+                                                    <ItemDetails Item="item"/>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
+                                    </div>   
+                                }
+                                
                             </div>
                         </div>
                     }
@@ -140,6 +161,31 @@
     [Parameter] public string? Search { get; set; }
 
     private const int Take = 12;
+    
+    private static readonly HashSet<ItemSubType> SubTypesBlacklist =
+    [
+        ItemSubType.Aura,
+        ItemSubType.EarCostume,
+        ItemSubType.EquipmentMaterial,
+        ItemSubType.FoodMaterial,
+        ItemSubType.Grimoire,
+        ItemSubType.EyeCostume,
+        ItemSubType.HairCostume,
+        ItemSubType.MonsterPart,
+        ItemSubType.NormalMaterial,
+        ItemSubType.TailCostume,
+        ItemSubType.Chest
+    ];
+    
+    private static readonly HashSet<ItemSubType> SubTypesFungibles =
+    [
+        ItemSubType.ApStone,
+        ItemSubType.Food,
+        ItemSubType.Circle,
+        ItemSubType.Hourglass,
+        ItemSubType.Scroll,
+    ];
+    
     private int _currentPageIndex;
     private int Skip => Take * _currentPageIndex;
     private IEnumerable<int>? _itemIds = [];

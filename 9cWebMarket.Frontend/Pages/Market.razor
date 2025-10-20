@@ -35,16 +35,18 @@
         <div id="categories" class="w-50 h-auto mb-1">
             <div class="mt-1 pt-3 pb-2 container bg-body-secondary rounded-2 h-100">
                 <h4>Category</h4>
-                @for (int i = 6; i <= 10; i++)
+                @for (int i = 6; i <= 22; i++)
                 {
                     var itemSubType = (ItemSubType) i;
+                    if(SubTypesBlacklist.Contains(itemSubType)) continue;
+                    
                     var buttonColor = itemSubType == _subtype ? "btn-primary" : "btn-secondary";
                     <button class="btn badge @buttonColor m-1" @onclick="_ => Refresh(itemSubType)">@itemSubType</button>
                 }
             </div>
         </div>
-        <div id="sorting" class="w-50">
-            <div class="mt-1 pt-3 pb-2 container bg-body-secondary rounded-2">
+        <div id="sorting" class="w-50 h-auto mb-1">
+            <div class="mt-1 pt-3 pb-2 container bg-body-secondary rounded-2 h-100">
                 <h4>Sorting</h4>
                 @foreach (var productSortBy in Enum.GetValues<ProductSortBy>())
                 {
@@ -75,10 +77,13 @@
                 }
             </div>
         </div>
-        <div id="search" class="mt-1 pt-3 pb-2 container bg-body-secondary rounded-2 flex-grow-1">
-            <h4>Search</h4>
-            <input type="text" class="form-control" placeholder="min. 3 characters" @onchange="OnSearchInputChange">
-        </div>
+        @if(_selectedMarketService == "9CAPI")
+        {
+            <div id="search" class="mt-1 pt-3 pb-2 container bg-body-secondary rounded-2 flex-grow-1">
+                <h4>Search</h4>
+                <input type="text" class="form-control" placeholder="min. 3 characters" @onchange="OnSearchInputChange">
+            </div>
+        }
     </div>
 
 </div>
@@ -89,6 +94,21 @@
     private const string MarketServiceQueryKey = "marketService";
     private const string DefaultPlanet = "heimdall";
     private const string DefaultMarketService = "9CAPI";
+
+    private static readonly HashSet<ItemSubType> SubTypesBlacklist =
+    [
+        ItemSubType.Aura,
+        ItemSubType.EarCostume,
+        ItemSubType.EquipmentMaterial,
+        ItemSubType.FoodMaterial,
+        ItemSubType.Grimoire,
+        ItemSubType.EyeCostume,
+        ItemSubType.HairCostume,
+        ItemSubType.MonsterPart,
+        ItemSubType.NormalMaterial,
+        ItemSubType.TailCostume,
+        ItemSubType.Chest
+    ];
     
     private ItemSubType _subtype = ItemSubType.Weapon;
     private ProductSortBy _sortBy = ProductSortBy.CP;
